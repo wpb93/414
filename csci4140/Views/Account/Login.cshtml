@@ -1,21 +1,20 @@
 ﻿@model csci4140.Models.LoginModel
 
 @{
-    ViewBag.Title = "登录";
+    ViewBag.Title = "Login";
 }
 
 <hgroup class="title">
-    <h1>@ViewBag.Title.</h1>
+    <h2>@ViewBag.Title</h2>
 </hgroup>
 
 <section id="loginForm">
-<h2>使用本地帐户登录。</h2>
 @using (Html.BeginForm(new { ReturnUrl = ViewBag.ReturnUrl })) {
     @Html.AntiForgeryToken()
     @Html.ValidationSummary(true)
 
     <fieldset>
-        <legend>“登录”表单</legend>
+        <legend>Login Form</legend>
         <ol>
             <li>
                 @Html.LabelFor(m => m.UserName)
@@ -32,17 +31,17 @@
                 @Html.LabelFor(m => m.RememberMe, new { @class = "checkbox" })
             </li>
         </ol>
-        <input type="submit" value="登录" />
+        <input type="submit" value="login" />
     </fieldset>
     <p>
-        @Html.ActionLink("注册", "Register") 如果你没有帐户。
+        @Html.ActionLink("I do not have an account", "Register")
     </p>
 }
 </section>
 
 <section class="social" id="socialLoginForm">
-    <h2>使用其他服务登录。</h2>
-    @Html.Action("ExternalLoginsList", new { ReturnUrl = ViewBag.ReturnUrl })
+    <h2>Game Sample</h2>
+    
 </section>
 
 @section Scripts {

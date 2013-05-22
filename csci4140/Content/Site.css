@@ -129,11 +129,14 @@ footer {
 /* site title
 ----------------------------------------------------------*/
 .site-title {
-    color: #c8c8c8;
-    font-family: Rockwell, Consolas, "Courier New", Courier, monospace;
-    font-size: 2.3em;
+    font-size: 5em;
     margin: 0;
-}
+    color: #7ac0da;
+    font-family: 'Noto Sans', sans-serif;
+    font-weight: bold;
+    /*-webkit-text-shadow: 1px 1px 0 #ccc, 2px 2px 0 #bbb, 3px 3px 0 #aaa, 4px 4px 0 #999, 5px 5px 0 #666, 6px 6px 1px #000, 0 0px 3px #000, 0 1px 3px #000, 0 3px 5px #000, 0 5px 10px #000, 0 5px 20px #000;
+    text-shadow: 1px 1px 0 #ccc, 2px 2px 0 #bbb, 3px 3px 0 #aaa, 4px 4px 0 #999, 5px 5px 0 #666, 6px 6px 1px #000, 0 0px 3px #000, 0 1px 3px #000, 0 3px 5px #000, 0 5px 10px #000, 0 5px 20px #000;
+*/}
 
 .site-title a, .site-title a:hover, .site-title a:active {
     background: none;
