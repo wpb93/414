@@ -41,7 +41,7 @@ namespace csci4140.Controllers
             }
 
             // 如果我们进行到这一步时某个地方出错，则重新显示表单
-            ModelState.AddModelError("", "提供的用户名或密码不正确。");
+            ModelState.AddModelError("", "Username or password error.");
             return View(model);
         }
 
@@ -128,9 +128,9 @@ namespace csci4140.Controllers
         public ActionResult Manage(ManageMessageId? message)
         {
             ViewBag.StatusMessage =
-                message == ManageMessageId.ChangePasswordSuccess ? "你的密码已更改。"
-                : message == ManageMessageId.SetPasswordSuccess ? "已设置你的密码。"
-                : message == ManageMessageId.RemoveLoginSuccess ? "已删除外部登录。"
+                message == ManageMessageId.ChangePasswordSuccess ? "Your password has been changed."
+                : message == ManageMessageId.SetPasswordSuccess ? "Password setted."
+                : message == ManageMessageId.RemoveLoginSuccess ? "Deleted external login.。"
                 : "";
             ViewBag.HasLocalPassword = OAuthWebSecurity.HasLocalAccount(WebSecurity.GetUserId(User.Identity.Name));
             ViewBag.ReturnUrl = Url.Action("Manage");
@@ -168,7 +168,7 @@ namespace csci4140.Controllers
                     }
                     else
                     {
-                        ModelState.AddModelError("", "当前密码不正确或新密码无效。");
+                        ModelState.AddModelError("", "Current password is wrong or new password invalid.");
                     }
                 }
             }
@@ -191,7 +191,7 @@ namespace csci4140.Controllers
                     }
                     catch (Exception)
                     {
-                        ModelState.AddModelError("", String.Format("无法创建本地帐户。可能已存在名为“{0}”的帐户。", User.Identity.Name));
+                        ModelState.AddModelError("", String.Format("Can not create new account", User.Identity.Name));
                     }
                 }
             }
@@ -280,7 +280,7 @@ namespace csci4140.Controllers
                     }
                     else
                     {
-                        ModelState.AddModelError("UserName", "用户名已存在。请输入其他用户名。");
+                        ModelState.AddModelError("UserName", "Username exists.");
                     }
                 }
             }

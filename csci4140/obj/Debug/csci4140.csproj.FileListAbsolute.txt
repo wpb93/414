@@ -195,6 +195,6 @@ C:\Users\Ryan\Documents\GitHub\414\csci4140\bin\ko\System.Spatial.resources.dll
 C:\Users\Ryan\Documents\GitHub\414\csci4140\bin\ru\System.Spatial.resources.dll
 C:\Users\Ryan\Documents\GitHub\414\csci4140\bin\zh-Hans\System.Spatial.resources.dll
 C:\Users\Ryan\Documents\GitHub\414\csci4140\bin\zh-Hant\System.Spatial.resources.dll
-C:\Users\Ryan\Documents\GitHub\414\csci4140\obj\Debug\csci4140.csprojResolveAssemblyReference.cache
 C:\Users\Ryan\Documents\GitHub\414\csci4140\obj\Debug\csci4140.dll
 C:\Users\Ryan\Documents\GitHub\414\csci4140\obj\Debug\csci4140.pdb
+C:\Users\Ryan\Documents\GitHub\414\csci4140\obj\Debug\csci4140.csprojResolveAssemblyReference.cache
