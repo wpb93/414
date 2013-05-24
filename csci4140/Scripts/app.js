@@ -112,11 +112,29 @@ var DemoLoadBalancing = (function (_super) {
         var lobby = document.getElementById("lobby");
         lobby.style.display = "none";
         this.speak("Game " + this.myRoom().name + " joined");
+        var actors = this.myRoomActors();
+        var opponent;
+        for(var i in actors) {
+            if(parseInt(i) != this.myActor().actorNr) {
+                opponent = actors[i];
+                break;
+            }
+        }
+        var title = document.getElementsByTagName("h1")[0];
+        title.innerText = opponent ? ("Your opponent is " + opponent.name) : "Waiting for another player...";
     };
     DemoLoadBalancing.prototype.onActorJoin = function (actor) {
+        if(this.isJoinedToRoom()) {
+            var title = document.getElementsByTagName("h1")[0];
+            title.innerText = "Your opponent is " + actor.name;
+        }
         this.speak(actor.name + " joined");
     };
     DemoLoadBalancing.prototype.onActorLeave = function (actor) {
+        if(this.isJoinedToRoom()) {
+            var title = document.getElementsByTagName("h1")[0];
+            title.innerText = "Waiting for another player...";
+        }
         this.speak(actor.name + " left");
     };
     DemoLoadBalancing.prototype.sendMessage = function (message) {
@@ -133,6 +151,7 @@ var DemoLoadBalancing = (function (_super) {
     DemoLoadBalancing.prototype.setupUI = function () {
         var _this = this;
         this.logger.info("Setting up UI.");
+        var userlist = document.getElementById("userlist");
         var input = document.getElementById("input");
         input.value = '';
         input.focus();
@@ -182,6 +201,8 @@ var DemoLoadBalancing = (function (_super) {
             chat.style.display = "none";
             var lobby = document.getElementById("lobby");
             lobby.style.display = "block";
+            var title = document.getElementsByTagName("h1")[0];
+            title.innerText = "Lobby";
             return false;
         };
         btn = document.getElementById("colorbtn");
@@ -196,6 +217,8 @@ var DemoLoadBalancing = (function (_super) {
         chat.style.display = "none";
         var lobby = document.getElementById("lobby");
         lobby.style.display = "block";
+        var title = document.getElementsByTagName("h1")[0];
+        title.innerText = "Lobby";
     };
     DemoLoadBalancing.prototype.speak = function (str, color) {
         var log = document.getElementById("theDialogue");
