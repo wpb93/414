@@ -43,6 +43,14 @@ form.photon {
     margin-right: 2em;
 }
 
+#chat {
+    display: none;
+}
+
+#lobby {
+    display: block;
+}
+
 #theDialogue {
     background-color: #000;
     border: 2px solid #fff;
@@ -60,51 +68,60 @@ form.photon {
 #gamelist {
     margin: 2em;
     border-collapse: separate;
-    border-spacing: 20px;
+    border-spacing: 1.75em;
 }
 
 td.room {
-    border: 1px solid rgba(0, 0, 0, 0);
     color: azure;
     background-color: darkgray;
-    font: 20px Arial;
-    padding: 10px;
-    margin: 10px;
+    font: 2em "Noto Sans",sans-serif;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+    padding: 0.5em;
+    margin: 0.5em;
     text-align: center;
     width: 200px;
     border-radius: 10px;
-    -webkit-box-shadow: black 2px 2px 20px;
-    box-shadow: black 2px 2px 20px;
+    -webkit-box-shadow: black 0.1em 0.1em 1em;
+    box-shadow: black 0.1em 0.1em 1em;
     -moz-transition: color 0.1s, background-color 0.1s;
     -o-transition: color 0.1s, background-color 0.1s;
     -webkit-transition: color 0.1s, background-color 0.1s;
     transition: color 0.1s, background-color 0.1s;
 }
 
-td.room span {
-    margin-left: 10px;
-    font-weight: bold;
-    color: greenyellow;
-}
+    td.room span {
+        margin-left: 0.25em;
+        font-weight: bold;
+        color: greenyellow;
+        white-space: nowrap;
+    }
 
 td.full {
     color: azure;
     background-color: magenta;
 }
 
-td.full span {
-    color: darkred;
-}
+    td.full span {
+        color: darkred;
+    }
 
 td.room:hover {
     color: dimgray;
     background-color: azure;
     cursor: pointer;
-    -webkit-box-shadow: black 2px 2px 20px;
-    box-shadow: black 2px 2px 20px;
+    -webkit-box-shadow: black 0.1em 0.1em 1em;
+    box-shadow: black 0.1em 0.1em 1em;
 }
 
 td.full:hover {
     color: dimgray;
     background-color: azure;
+}
+
+#roomnum {
+    font: 2em "Noto Sans",sans-serif;
+
 }

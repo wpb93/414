@@ -73,7 +73,7 @@ var DemoLoadBalancing = (function (_super) {
             var item = document.createElement("td");
             var isFull = r.playerCount >= r.maxPlayers;
             item.className = isFull ? "room full" : "room";
-            item.innerText = r.name;
+            item.innerText = r.name + " ";
             var capacity = document.createElement("span");
             capacity.innerText = r.playerCount + " / " + r.maxPlayers;
             item.appendChild(capacity);
@@ -97,10 +97,16 @@ var DemoLoadBalancing = (function (_super) {
         if(k < roomsPerRow) {
             menu.appendChild(row);
         }
+        var cnt = document.getElementById("roomcnt");
+        cnt.innerText = rooms.length.toString();
         this.output("Demo: Rooms total: " + rooms.length);
         this.updateRoomButtons();
     };
     DemoLoadBalancing.prototype.onJoinRoom = function () {
+        var dialog = document.getElementById("theDialogue");
+        dialog.innerHTML = "";
+        var input = document.getElementById("input");
+        input.value = "";
         var chat = document.getElementById("chat");
         chat.style.display = "block";
         var lobby = document.getElementById("lobby");
@@ -128,7 +134,7 @@ var DemoLoadBalancing = (function (_super) {
         var _this = this;
         this.logger.info("Setting up UI.");
         var input = document.getElementById("input");
-        input.value = 'hello';
+        input.value = '';
         input.focus();
         var btnJoin = document.getElementById("joinrandomgamebtn");
         btnJoin.onclick = function (ev) {
@@ -145,7 +151,7 @@ var DemoLoadBalancing = (function (_super) {
             if(_this.isInLobby()) {
                 var name = document.getElementById("newgamename");
                 _this.output("New Game");
-                _this.createRoom(uid, true, true, 2);
+                _this.createRoom(name.value ? name.value : (uid + "'s room"), true, true, 2);
             } else {
                 _this.output("Reload page to connect to Master");
             }
@@ -155,8 +161,10 @@ var DemoLoadBalancing = (function (_super) {
         form.onsubmit = function () {
             if(_this.isJoinedToRoom()) {
                 var input = document.getElementById("input");
-                _this.sendMessage(input.value);
-                input.value = '';
+                if(input.value) {
+                    _this.sendMessage(input.value);
+                    input.value = '';
+                }
                 input.focus();
             } else {
                 if(_this.isInLobby()) {
