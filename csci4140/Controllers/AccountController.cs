@@ -23,8 +23,15 @@ namespace csci4140.Controllers
         [AllowAnonymous]
         public ActionResult Login(string returnUrl)
         {
-            ViewBag.ReturnUrl = returnUrl;
-            return View();
+            if (Request.IsAuthenticated)
+            {
+                return RedirectToAction("Lobby", "Game");
+            }
+            else
+            {
+                ViewBag.ReturnUrl = returnUrl;
+                return View();
+            }
         }
 
         //
@@ -54,7 +61,7 @@ namespace csci4140.Controllers
         {
             WebSecurity.Logout();
 
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Account", "Login");
         }
 
         //
@@ -63,7 +70,14 @@ namespace csci4140.Controllers
         [AllowAnonymous]
         public ActionResult Register()
         {
-            return View();
+            if (Request.IsAuthenticated)
+            {
+                return RedirectToAction("Lobby", "Game");
+            }
+            else
+            {
+                return View();
+            }
         }
 
         //
@@ -81,7 +95,7 @@ namespace csci4140.Controllers
                 {
                     WebSecurity.CreateUserAndAccount(model.UserName, model.Password);
                     WebSecurity.Login(model.UserName, model.Password);
-                    return RedirectToAction("Index", "Home");
+                    return RedirectToAction("Game", "Lobby");
                 }
                 catch (MembershipCreateUserException e)
                 {
@@ -337,7 +351,7 @@ namespace csci4140.Controllers
             }
             else
             {
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Lobby", "Game");
             }
         }
 

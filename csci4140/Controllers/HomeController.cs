@@ -10,9 +10,14 @@ namespace csci4140.Controllers
     {
         public ActionResult Index()
         {
-            ViewBag.Message = "Modify this template to jump-start your ASP.NET MVC application.";
-
-            return View();
+            if (Request.IsAuthenticated)
+            {
+                return RedirectToAction("Lobby", "Game");
+            }
+            else
+            {
+                return RedirectToAction("Login", "Account");
+            }
         }
 
         public ActionResult About()

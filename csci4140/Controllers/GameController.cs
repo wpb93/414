@@ -6,6 +6,7 @@ using System.Web.Mvc;
 
 namespace csci4140.Controllers
 {
+    [Authorize]
     public class GameController : Controller
     {
         //

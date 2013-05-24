@@ -193,6 +193,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Content\eg.photon.demo.css" />
     <Content Include="Content\themes\base\images\blood.gif" />
     <Content Include="Content\themes\base\images\ui-bg_flat_0_aaaaaa_40x100.png" />
     <Content Include="Content\themes\base\images\ui-bg_flat_75_ffffff_40x100.png" />
@@ -252,6 +253,8 @@
     <Content Include="Global.asax" />
     <None Include="Scripts\jquery-1.8.2.intellisense.js" />
     <Content Include="Images\blood.gif" />
+    <Content Include="Scripts\app.js" />
+    <Content Include="Scripts\cloud-app-info.js" />
     <Content Include="Scripts\gameSample.js" />
     <Content Include="Scripts\jquery-1.8.2.js" />
     <Content Include="Scripts\jquery-1.8.2.min.js" />
@@ -267,6 +270,14 @@
     <Content Include="Scripts\knockout-2.2.0.debug.js" />
     <Content Include="Scripts\knockout-2.2.0.js" />
     <Content Include="Scripts\modernizr-2.6.2.js" />
+    <Content Include="Scripts\Photon\3rdparty\swfobject.js" />
+    <Content Include="Scripts\Photon\3rdparty\WebSocketMain.swf" />
+    <Content Include="Scripts\Photon\3rdparty\web_socket.js" />
+    <Content Include="Scripts\Photon\Photon-Javascript_SDK.js" />
+    <Content Include="Scripts\Photon\photon-lite-constants.js" />
+    <Content Include="Scripts\Photon\photon-loadbalancing-constants.js" />
+    <Content Include="Scripts\Photon\photon-loadbalancing.js" />
+    <Content Include="Scripts\Photon\photon.js" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
@@ -309,6 +320,7 @@
     <Content Include="Views\Shared\_LogoPartial.cshtml" />
     <Content Include="Views\Shared\_GameSample.cshtml" />
     <Content Include="Views\Game\Lobby.cshtml" />
+    <Content Include="Views\Game\_GameLayout.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
