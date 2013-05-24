@@ -61,7 +61,7 @@ namespace csci4140.Controllers
         {
             WebSecurity.Logout();
 
-            return RedirectToAction("Account", "Login");
+            return RedirectToAction("Login", "Account");
         }
 
         //
