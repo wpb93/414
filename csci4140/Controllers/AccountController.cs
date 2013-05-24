@@ -95,7 +95,7 @@ namespace csci4140.Controllers
                 {
                     WebSecurity.CreateUserAndAccount(model.UserName, model.Password);
                     WebSecurity.Login(model.UserName, model.Password);
-                    return RedirectToAction("Game", "Lobby");
+                    return RedirectToAction("Lobby", "Game");
                 }
                 catch (MembershipCreateUserException e)
                 {
