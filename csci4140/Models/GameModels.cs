@@ -11,4 +11,8 @@ namespace csci4140.Models
     public class LobbyModel
     {
     }
+
+    public class SinglePlayerModel
+    {
+    }
 }

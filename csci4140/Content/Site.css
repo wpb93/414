@@ -130,7 +130,7 @@ footer {
 ----------------------------------------------------------*/
 .site-title {
     font-size: 5em;
-    margin: 0;
+    margin: 0 0 0.4em;
     color: #7ac0da;
     font-family: 'Noto Sans', sans-serif;
     font-weight: bold;
@@ -185,7 +185,7 @@ footer {
 ul#menu {
     font-size: 1.3em;
     font-weight: 600;
-    margin: 0 0 5px;
+    margin: 4em 0 5px;
     padding: 0;
     text-align: right;
 }

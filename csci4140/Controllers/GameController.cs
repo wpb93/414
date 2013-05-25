@@ -17,5 +17,12 @@ namespace csci4140.Controllers
             return View();
         }
 
+        //
+        // GET: /Game/SinglePlayer
+
+        public ActionResult SinglePlayer()
+        {
+            return View();
+        }
     }
 }
