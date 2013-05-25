@@ -107,3 +107,55 @@ function hole() {
 function p1(e) {
     e.preventDefault();
 }
+
+function shake() {
+	var j=0;
+	var x = document.getElementById("gameCanvas");
+	var l = parseInt(x.style.left);
+	var t = parseInt(x.style.top);
+	function shakeMyAss() {
+		setTimeout(function() {
+			x.style.left = (l + 10) + 'px';
+			setTimeout(function() {
+				x.style.left = l + 'px';
+			},Math.floor((Math.random()*30)+30));
+		},Math.floor((Math.random()*30)+30));
+		setTimeout(function() {
+			x.style.top = (t - 10) + 'px';
+			setTimeout(function() {
+				x.style.top = t + 'px';
+			},Math.floor((Math.random()*30)+30));
+		},Math.floor((Math.random()*30)+30));
+		setTimeout(function() {
+			x.style.top = (t + 10) + 'px';
+			setTimeout(function() {
+				x.style.top = t + 'px';
+			},Math.floor((Math.random()*30)+30));
+		},Math.floor((Math.random()*30)+30));
+		setTimeout(function() {
+			x.style.left = (l - 10) + 'px';
+			setTimeout(function() {
+				x.style.left = l + 'px';
+			},Math.floor((Math.random()*30)+30));
+		},Math.floor((Math.random()*30)+30));
+		if (j++<200) {
+			setTimeout(shakeMyAss,Math.floor((Math.random()*30)+30));
+		}
+		else {
+			x.style.top = t + 'px';
+			x.style.left = l + 'px';
+		}
+	}
+	shakeMyAss();
+}
+function initButton() {
+    var buttonDiv = document.getElementById("buttonContainer");
+    var canvasDiv = document.getElementById("gameCanvas");
+    buttonDiv.style.top = (parseInt(canvasDiv.style.top) + parseInt(canvasDiv.offsetHeight) + parseInt(canvasDiv.style.height)) + 'px';
+    buttonDiv.style.left = canvasDiv.style.left;
+    buttonDiv.style.position = "absolute";
+
+}
+
+
+window.addEventListener("load", initButton, false);
