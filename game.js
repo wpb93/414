@@ -1,15 +1,13 @@
 var game;
 
-/* 
- * order:: a func that takes 2 parameters, return an integer > 0 if the first element is larger than the second element
- * between:: return 1 if c is between a and b, else return 0 
- */
-function between(a, b, c, order) {
-	if (order) {
-		return (((order(a) > order(c)) && (order(c) > order(b))) || ((order(a) < order(c)) && (order(c) < order(b))));
-	} else {
-		return (((a > c) && (c > b)) || ((a < c) && (c < b)));
+function between(m, a, b, inclusive, cmp) {
+	if (!cmp) {
+		cmp = function (a, b) {
+			return a == b ? 0 : (a < b ? -1 : 1);
+		};
 	}
+	var diff = cmp(a, m) * cmp(m, b);
+	return inclusive ? diff >= 0 : diff > 0;
 }
 
 function Point(x, y) {
@@ -83,7 +81,7 @@ function Ball(position_x, position_y, speed_x, speed_y, ballRadius) {
 		if (diff == 0) {
 			return myself.speed[lineDirPerp] > 0 ? -1 : 1;
 		} else {
-		    if (!((((diff > 0) ? -1 : 1) * myself.speed[lineDirPerp]) < 0)) console.log('diff=' + diff + ' linePos=' + line.startPoint[lineDirPerp] + ' ballPos=' + myself.position[lineDirPerp] + ' return=' + ((diff > 0) ? -1 : 1) + ' speed=' + myself.speed[lineDirPerp] + ' correct=' + ((((diff > 0) ? -1 : 1) * myself.speed[lineDirPerp]) < 0));
+			if (!((((diff > 0) ? -1 : 1) * myself.speed[lineDirPerp]) < 0)) console.log('diff=' + diff + ' linePos=' + line.startPoint[lineDirPerp] + ' ballPos=' + myself.position[lineDirPerp] + ' return=' + ((diff > 0) ? -1 : 1) + ' speed=' + myself.speed[lineDirPerp] + ' correct=' + ((((diff > 0) ? -1 : 1) * myself.speed[lineDirPerp]) < 0));
 			return (diff > 0) ? -1 : 1;
 		}
 	};
@@ -111,8 +109,9 @@ function Line(start_x, start_y, end_x, end_y, drawSpeed) {
 			return;
 		}
 		myself.drawPoint[drawDir] += ((myself.endPoint[drawDir] - myself.startPoint[drawDir] > 0) ? 1 : -1) * parseFloat(myself.drawSpeed) / game.fps;
-		if (myself.drawPoint[drawDir] < Math.min(myself.startPoint[drawDir], myself.endPoint[drawDir])
-				|| myself.drawPoint[drawDir] > Math.max(myself.startPoint[drawDir], myself.endPoint[drawDir])) {
+		/*if (myself.drawPoint[drawDir] < Math.min(myself.startPoint[drawDir], myself.endPoint[drawDir])
+				|| myself.drawPoint[drawDir] > Math.max(myself.startPoint[drawDir], myself.endPoint[drawDir])) {*/
+		if (!between(myself.drawPoint[drawDir], myself.startPoint[drawDir], myself.endPoint[drawDir], true)) {
 			myself.drawPoint[drawDir] = myself.endPoint[drawDir];
 			if (game.currLines[0] == myself) game.currLines.shift();
 			else game.currLines.pop();
@@ -124,10 +123,8 @@ function Line(start_x, start_y, end_x, end_y, drawSpeed) {
 		var halfLineWidth = parseFloat(game.lineWidth) / 2;
 		var lineDir = myself.direction == Line.HORIZONTAL ? 'x' : 'y';
 		var lineDirPerp = myself.direction == Line.HORIZONTAL ? 'y' : 'x';
-		return ((ball.position[lineDirPerp] + ball.radius >= myself.startPoint[lineDirPerp] - halfLineWidth
-				&& ball.position[lineDirPerp] - ball.radius <= myself.startPoint[lineDirPerp] + halfLineWidth)
-				&& (ball.position[lineDir] >= Math.min(myself.startPoint[lineDir], myself.drawPoint[lineDir])
-				&& ball.position[lineDir] <= Math.max(myself.startPoint[lineDir], myself.drawPoint[lineDir])));
+		return (between(ball.position[lineDirPerp], myself.startPoint[lineDirPerp] - (halfLineWidth + ball.radius), myself.startPoint[lineDirPerp] + (halfLineWidth + ball.radius), true)
+				&& between(ball.position[lineDir], myself.startPoint[lineDir], myself.drawPoint[lineDir], true));
 	};
 }
 
@@ -148,8 +145,9 @@ function Node(leftPoint, rightPoint) {
 
 }
 
-function Game(canvas, height, width, ballNumber, ballSpeed, ballRadius, lineSpeed, lineWidth, fps) {
-	this.canvas = canvas;
+function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineSpeed, lineWidth, fps) {
+	this.canvasDiv = canvasDiv;
+	this.canvas = canvasDiv.getElementsByClassName('game');
 	this.display = 0;
 	this.gameHeight = height;
 	this.gameWidth = width;
@@ -204,26 +202,37 @@ function Game(canvas, height, width, ballNumber, ballSpeed, ballRadius, lineSpee
 		myself.lines.push(line);
 
 		//addeventlistener
-		for (var i = 0; i < myself.canvas.length; i++) {
-			myself.canvas[i].addEventListener("click", drawNewLine, false);
-			myself.canvas[i].addEventListener("contextmenu", drawNewLine, false);
-		}
+		myself.canvasDiv.addEventListener("click", drawNewLine, false);
+		myself.canvasDiv.addEventListener("contextmenu", drawNewLine, false);
 
 		//update();
 		setInterval(update, 1000.0 / myself.fps);
 	};
 
-	function getNode(x, y) {
+	function getNode(point) {
 		for (var i = 0; i < myself.gameBoard.length; i++) {
 			for (var j = 0; j < myself.gameBoard[i].length; j++) {
-				if (x >= myself.gameBoard[i][j].leftPoint.x
-						&& x < myself.gameBoard[i][j].rightPoint.x
-						&& y >= myself.gameBoard[i][j].leftPoint.y
-						&& y < myself.gameBoard[i][j].rightPoint.y) {
+			    if (between(point.x, myself.gameBoard[i][j].leftPoint.x, myself.gameBoard[i][j].rightPoint.x)
+						&& between(point.y, myself.gameBoard[i][j].leftPoint.y, myself.gameBoard[i][j].rightPoint.y)) {
 					return new Point(i, j);
 				}
 			}
 		}
+	}
+
+	function markHasBalls(point) {
+	    for (var i = 0; i < gameBoard.length; i++) {
+	        for (var j = 0; j < gameBoard[i].length; j++) {
+	            gameBoard[i][j].hasBalls = false;
+	        }
+	    }
+	    function dfsNodeTable(node) {
+	        if (!node || node.hasBalls) return;
+	        node.hasBalls = true;
+	        for (var k = 0; k < node.neighbor.length; k++) {
+	            dfsNodeTable(node.neighbor[k]);
+	        }
+	    } (getNode(point));
 	}
 
 	function drawNewLine(e) {
@@ -251,7 +260,8 @@ function Game(canvas, height, width, ballNumber, ballSpeed, ballRadius, lineSpee
 		if (game.currLines.length) return;
 
 		var clickPos = new Point(e.offsetX, e.offsetY);
-		var nodePos = getNode(clickPos.x, clickPos.y);
+		var nodePos = getNode(clickPos);
+		if (!nodePos) return;
 		var node;
 		var endPoint = new Point();
 		endPoint[drawDirPerp.lineDir] = clickPos[drawDirPerp.lineDir];
@@ -288,17 +298,17 @@ function Game(canvas, height, width, ballNumber, ballSpeed, ballRadius, lineSpee
 		ctx.beginPath();
 		ctx.lineWidth = myself.lineWidth;
 		for (i = 0; i < myself.lines.length; i++) {
-		    myself.lines[i].draw();
-		    ctx.moveTo(myself.lines[i].startPoint.x, myself.lines[i].startPoint.y);
-		    ctx.lineTo(myself.lines[i].drawPoint.x, myself.lines[i].drawPoint.y);
+			myself.lines[i].draw();
+			ctx.moveTo(myself.lines[i].startPoint.x, myself.lines[i].startPoint.y);
+			ctx.lineTo(myself.lines[i].drawPoint.x, myself.lines[i].drawPoint.y);
 		}
 		ctx.stroke();
 	}
 }
 
 function init() {
-	var gameCanvas = document.getElementsByClassName("game");
-	game = new Game(gameCanvas, 700, 600, 10, 400, 4, 200, 2, 60);
+	var gameCanvasDiv = document.getElementById("gameCanvas");
+	game = new Game(gameCanvasDiv, 700, 600, 10, 400, 4, 200, 2, 60);
 	game.begin();
 }
 
