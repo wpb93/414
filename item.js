@@ -83,3 +83,26 @@ function curve() {
 		game.gravity.shift();
 	}, 5000);
 }
+
+function hole() {
+    var container = document.createElement("div");
+    container.addEventListener("click",p1, false);
+    container.addEventListener("contextmenu",p1, false);
+    container.style.left = (parseInt(Math.random() * (game.gameWidth - 200) + 100) - 240) + "px";
+    container.style.top = (parseInt(Math.random() * (game.gameHeight - 200) + 100) - 200) + "px";
+    container.style.position = "absolute";
+    var image = document.createElement("img");
+    image.style.height = "200px";
+    image.style.width = "240px";
+    image.src = "hole.png";
+    container.appendChild(image);
+    var body = document.getElementsByTagName("body")[0];
+    body.appendChild(container);
+    setTimeout(function () {
+        body.removeChild(container);
+    }, 10000);
+}
+
+function p1(e) {
+    e.preventDefault();
+}
