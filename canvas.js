@@ -17,24 +17,37 @@ function Ball(position_x, position_y, speed_x, speed_y, ballRadius) {
 		if (myself.position.y > game.gameHeight - myself.radius || myself.position.y < myself.radius) {
 			myself.speed.y *= -1;
 		}
-		
+
 		var collision = [];
-		collision[Line.HORIZONTAL] = collision[Line.VERTICAL] = false;
+		var bounce = [];
+		bounce[Line.HORIZONTAL] = bounce[Line.HORIZONTAL] = false;
+		collision[Line.HORIZONTAL] = { '-1': 0, '1': 0 };
+		collision[Line.VERTICAL] = { '-1': 0, '1': 0 };
 		for (var i = 0; i < game.lines.length; i++) {
 			if (game.lines[i].collide(myself)) {
-				collision[game.lines[i].direction] = true;
-				if (collision[Line.HORIZONTAL] && collision[Line.VERTICAL]) break;
+				var bounceDir = myself.bounceDirection(game.lines[i]);
+				collision[game.lines[i].direction][bounceDir] = bounceDir;
+				bounce[game.lines[i].direction] = true;
 			}
 		}
-		if (collision[Line.HORIZONTAL]) {
-			myself.speed.y *= -1;
+
+		var speedDir = [];
+		speedDir[Line.VERTICAL] = collision[Line.HORIZONTAL][-1] + collision[Line.HORIZONTAL][1];
+		speedDir[Line.HORIZONTAL] = collision[Line.VERTICAL][-1] + collision[Line.VERTICAL][1];
+		if (bounce[Line.HORIZONTAL]) {
+		    myself.speed.y *= speedDir[Line.VERTICAL] ? speedDir[Line.VERTICAL] : -1;
 		}
-		if (collision[Line.VERTICAL]) {
-			myself.speed.x *= -1;
+		if (bounce[Line.VERTICAL]) {
+		    myself.speed.x *= speedDir[Line.HORIZONTAL] ? speedDir[Line.HORIZONTAL] : -1;
 		}
 		myself.position.x += parseFloat(myself.speed.x) / game.fps;
 		myself.position.y += parseFloat(myself.speed.y) / game.fps;
-	}
+	};
+
+	this.bounceDirection = function (line) {
+		var lineDirPerp = line.direction == Line.HORIZONTAL ? 'y' : 'x';
+		return (line.startPoint[lineDirPerp] - myself.position[lineDirPerp] > 0) ? -1 : 1;
+	};
 }
 
 var Line;
@@ -56,8 +69,8 @@ function Line(start_x, start_y, end_x, end_y, drawSpeed) {
 		var drawDir = myself.direction == Line.HORIZONTAL ? 'x' : 'y';
 		if (myself.drawPoint[drawDir] == myself.endPoint[drawDir]) {
 			if (!myself.finished) {
-			    if (game.currLines[0] == myself) game.currLines.shift();
-			    else game.currLines.pop();
+				if (game.currLines[0] == myself) game.currLines.shift();
+				else game.currLines.pop();
 			}
 			return;
 		}
