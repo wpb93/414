@@ -1,5 +1,17 @@
 var game;
 
+/* 
+ * order:: a func that takes 2 parameters, return an integer > 0 if the first element is larger than the second element
+ * between:: return 1 if c is between a and b, else return 0 
+ */
+function between(a, b, c, order) {
+	if (order) {
+		return (((order(a) > order(c)) && (order(c) > order(b))) || ((order(a) < order(c)) && (order(c) < order(b))));
+	} else {
+		return (((a > c) && (c > b)) || ((a < c) && (c < b)));
+	}
+}
+
 function Point(x, y) {
 	this.x = x;
 	this.y = y;
@@ -11,42 +23,69 @@ function Ball(position_x, position_y, speed_x, speed_y, ballRadius) {
 	this.radius = ballRadius;
 	var myself = this;
 	this.move = function () {
-		if (myself.position.x > game.gameWidth - myself.radius || myself.position.x < myself.radius) {
-			myself.speed.x *= -1;
-		}
-		if (myself.position.y > game.gameHeight - myself.radius || myself.position.y < myself.radius) {
-			myself.speed.y *= -1;
-		}
+		myself.position.x += parseFloat(myself.speed.x) / game.fps;
+		myself.position.y += parseFloat(myself.speed.y) / game.fps;
 
 		var collision = [];
 		var bounce = [];
+		var border = [];
 		bounce[Line.HORIZONTAL] = bounce[Line.HORIZONTAL] = false;
+		border[Line.HORIZONTAL] = { '-1': -1, '1': -1 };
+		border[Line.VERTICAL] = { '-1': -1, '1': -1 };
 		collision[Line.HORIZONTAL] = { '-1': 0, '1': 0 };
 		collision[Line.VERTICAL] = { '-1': 0, '1': 0 };
 		for (var i = 0; i < game.lines.length; i++) {
 			if (game.lines[i].collide(myself)) {
 				var bounceDir = myself.bounceDirection(game.lines[i]);
+				var ballDir = game.lines[i].direction == Line.HORIZONTAL ? 'y' : 'x';
 				collision[game.lines[i].direction][bounceDir] = bounceDir;
 				bounce[game.lines[i].direction] = true;
+				border[game.lines[i].direction][bounceDir] = (border[game.lines[i].direction][bounceDir] < 0
+						? game.lines[i].startPoint[ballDir]
+						: bounceDir * Math.max(bounceDir * game.lines[i].startPoint[ballDir], bounceDir * border[game.lines[i].direction][bounceDir]));
+				if (!game.lines[i].finished) {
+					if (game.currLines[0] == game.lines[i]) game.currLines.shift();
+					else game.currLines.pop();
+					game.lines.splice(i--, 1);
+				}
 			}
 		}
 
 		var speedDir = [];
 		speedDir[Line.VERTICAL] = collision[Line.HORIZONTAL][-1] + collision[Line.HORIZONTAL][1];
 		speedDir[Line.HORIZONTAL] = collision[Line.VERTICAL][-1] + collision[Line.VERTICAL][1];
+		var halfLineWidth = parseFloat(game.lineWidth) / 2;
 		if (bounce[Line.HORIZONTAL]) {
-		    myself.speed.y *= speedDir[Line.VERTICAL] ? speedDir[Line.VERTICAL] : -1;
+			if (speedDir[Line.VERTICAL]) {
+				myself.speed.y = speedDir[Line.VERTICAL] * Math.abs(myself.speed.y);
+				var b = border[Line.HORIZONTAL][speedDir[Line.VERTICAL]];
+				var diff = myself.position.y - b;
+				myself.position.y = b + /*(parseFloat(myself.speed.y) / game.fps - diff) + */speedDir[Line.VERTICAL] * (halfLineWidth + myself.radius);
+			} else {
+				myself.speed.y *= -1;
+			}
 		}
 		if (bounce[Line.VERTICAL]) {
-		    myself.speed.x *= speedDir[Line.HORIZONTAL] ? speedDir[Line.HORIZONTAL] : -1;
+			if (speedDir[Line.HORIZONTAL]) {
+				myself.speed.x = speedDir[Line.HORIZONTAL] * Math.abs(myself.speed.x);
+				var b = border[Line.VERTICAL][speedDir[Line.HORIZONTAL]];
+				var diff = myself.position.x - b;
+				myself.position.x = b + /*(parseFloat(myself.speed.x) / game.fps - diff) + */speedDir[Line.HORIZONTAL] * (halfLineWidth + myself.radius);
+			} else {
+				myself.speed.x *= -1;
+			}
 		}
-		myself.position.x += parseFloat(myself.speed.x) / game.fps;
-		myself.position.y += parseFloat(myself.speed.y) / game.fps;
 	};
 
 	this.bounceDirection = function (line) {
 		var lineDirPerp = line.direction == Line.HORIZONTAL ? 'y' : 'x';
-		return (line.startPoint[lineDirPerp] - myself.position[lineDirPerp] > 0) ? -1 : 1;
+		var diff = line.startPoint[lineDirPerp] - (myself.position[lineDirPerp] - parseFloat(myself.speed[lineDirPerp] / game.fps));
+		if (diff == 0) {
+			return myself.speed[lineDirPerp] > 0 ? -1 : 1;
+		} else {
+		    if (!((((diff > 0) ? -1 : 1) * myself.speed[lineDirPerp]) < 0)) console.log('diff=' + diff + ' linePos=' + line.startPoint[lineDirPerp] + ' ballPos=' + myself.position[lineDirPerp] + ' return=' + ((diff > 0) ? -1 : 1) + ' speed=' + myself.speed[lineDirPerp] + ' correct=' + ((((diff > 0) ? -1 : 1) * myself.speed[lineDirPerp]) < 0));
+			return (diff > 0) ? -1 : 1;
+		}
 	};
 }
 
@@ -62,15 +101,12 @@ function Line(start_x, start_y, end_x, end_y, drawSpeed) {
 	this.finished = false;
 	var myself = this;
 	this.draw = function () {
-		//console.log(myself.drawPoint.x + " " + myself.endPoint.x);
-		//console.log(myself.drawPoint.y + " " + myself.endPoint.y);
-		//console.log(" ");
-
 		var drawDir = myself.direction == Line.HORIZONTAL ? 'x' : 'y';
 		if (myself.drawPoint[drawDir] == myself.endPoint[drawDir]) {
 			if (!myself.finished) {
 				if (game.currLines[0] == myself) game.currLines.shift();
 				else game.currLines.pop();
+				myself.finished = true;
 			}
 			return;
 		}
@@ -112,8 +148,9 @@ function Node(leftPoint, rightPoint) {
 
 }
 
-function Game(myCanvas, height, width, ballNumber, ballSpeed, ballRadius, lineSpeed, lineWidth, fps) {
-	this.myCanvas = myCanvas;
+function Game(canvas, height, width, ballNumber, ballSpeed, ballRadius, lineSpeed, lineWidth, fps) {
+	this.canvas = canvas;
+	this.display = 0;
 	this.gameHeight = height;
 	this.gameWidth = width;
 	this.gameBoard = [[]];
@@ -127,11 +164,14 @@ function Game(myCanvas, height, width, ballNumber, ballSpeed, ballRadius, lineSp
 	this.fps = fps;
 	this.currLines = [];
 	var myself = this;
-	this.myCanvas.setAttribute('width', width);
-	this.myCanvas.setAttribute('height', height);
+	for (var i = 0; i < this.canvas.length; i++) {
+		this.canvas[i].style.display = 'none';
+		this.canvas[i].setAttribute('width', width);
+		this.canvas[i].setAttribute('height', height);
+	}
 	this.begin = function () {
 		//new balls
-		myself.gameBoard = [[new Node(new Point(0, 0), new Point(myself.gameWidth, myself.gameHeight))]];
+		myself.gameBoard = [[new Node(new Point(1, 1), new Point(myself.gameWidth - 1, myself.gameHeight - 1))]];
 		for (var i = 0; i < ballNumber; i++) {
 			var x = Math.random() * (myself.gameWidth - myself.ballRadius * 2) + myself.ballRadius;
 			var y = Math.random() * (myself.gameHeight - myself.ballRadius * 2) + myself.ballRadius;
@@ -143,13 +183,35 @@ function Game(myCanvas, height, width, ballNumber, ballSpeed, ballRadius, lineSp
 			myself.balls[i] = new Ball(x, y, speed_x, speed_y, myself.ballRadius);
 		}
 
+		var line = new Line(1, 1, myself.gameWidth - 1, 1, Number.POSITIVE_INFINITY);
+		line.drawPoint = line.endPoint;
+		line.finished = true;
+		myself.lines.push(line);
+
+		line = new Line(1, 1, 1, myself.gameHeight - 1, Number.POSITIVE_INFINITY);
+		line.drawPoint = line.endPoint;
+		line.finished = true;
+		myself.lines.push(line);
+
+		line = new Line(myself.gameWidth - 1, myself.gameHeight - 1, myself.gameWidth - 1, 1, Number.POSITIVE_INFINITY);
+		line.drawPoint = line.endPoint;
+		line.finished = true;
+		myself.lines.push(line);
+
+		line = new Line(myself.gameWidth - 1, myself.gameHeight - 1, 1, myself.gameHeight - 1, Number.POSITIVE_INFINITY);
+		line.drawPoint = line.endPoint;
+		line.finished = true;
+		myself.lines.push(line);
+
 		//addeventlistener
-		myself.myCanvas.addEventListener("click", drawNewLine, false);
-		myself.myCanvas.addEventListener("contextmenu", drawNewLine, false);
+		for (var i = 0; i < myself.canvas.length; i++) {
+			myself.canvas[i].addEventListener("click", drawNewLine, false);
+			myself.canvas[i].addEventListener("contextmenu", drawNewLine, false);
+		}
 
 		//update();
 		setInterval(update, 1000.0 / myself.fps);
-	}
+	};
 
 	function getNode(x, y) {
 		for (var i = 0; i < myself.gameBoard.length; i++) {
@@ -208,7 +270,10 @@ function Game(myCanvas, height, width, ballNumber, ballSpeed, ballRadius, lineSp
 	}
 
 	function update() {
-		var c = document.getElementById("myCanvas");
+		myself.canvas[(myself.display - 1 + myself.canvas.length) % myself.canvas.length].style.display = 'none';
+		myself.canvas[myself.display].style.display = 'block';
+		myself.display = (myself.display + 1) % myself.canvas.length;
+		var c = myself.canvas[myself.display];
 		var ctx = c.getContext("2d");
 		ctx.clearRect(0, 0, myself.gameWidth, myself.gameHeight);
 		ctx.fillStyle = "#FF0000";
@@ -223,29 +288,17 @@ function Game(myCanvas, height, width, ballNumber, ballSpeed, ballRadius, lineSp
 		ctx.beginPath();
 		ctx.lineWidth = myself.lineWidth;
 		for (i = 0; i < myself.lines.length; i++) {
-			myself.lines[i].draw();
-			var collide = false;
-			for (var j = 0; j < myself.balls.length; j++) {
-				if (!myself.lines[i].finished && myself.lines[i].collide(myself.balls[j])) {
-					if (myself.currLines[0] == myself.lines[i]) myself.currLines.shift();
-					else myself.currLines.pop();
-					myself.lines.splice(i--, 1);
-					collide = true;
-					break;
-				}
-			}
-			if (!collide) {
-				ctx.moveTo(myself.lines[i].startPoint.x, myself.lines[i].startPoint.y);
-				ctx.lineTo(myself.lines[i].drawPoint.x, myself.lines[i].drawPoint.y);
-			}
+		    myself.lines[i].draw();
+		    ctx.moveTo(myself.lines[i].startPoint.x, myself.lines[i].startPoint.y);
+		    ctx.lineTo(myself.lines[i].drawPoint.x, myself.lines[i].drawPoint.y);
 		}
 		ctx.stroke();
 	}
 }
 
 function init() {
-	var myCanvas = document.getElementById("myCanvas");
-	game = new Game(myCanvas, 700, 600, 10, 400, 4, 200, 2, 60);
+	var gameCanvas = document.getElementsByClassName("game");
+	game = new Game(gameCanvas, 700, 600, 10, 400, 4, 200, 2, 60);
 	game.begin();
 }
 
