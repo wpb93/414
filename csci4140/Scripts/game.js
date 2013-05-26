@@ -340,6 +340,7 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 	}
 
 	function markHasBalls(nodePos) {
+		if (!nodePos) return;
 		dfsNodeTable(myself.gameBoard[nodePos.x][nodePos.y]);
 	}
 
@@ -364,37 +365,109 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 			default:
 				return;
 		}
-
+		
 		if (game.currLines.length) return;
 
 		var clickPos = new Point(e.offsetX, e.offsetY);
 		var nodePos = getNode(clickPos);
-		if (!nodePos || !myself.gameBoard[nodePos.x][nodePos.y].hasBalls) return;
+		if (!nodePos) return;
 		var node;
+		var newLine;
 		var endPoint = new Point();
 		endPoint[drawDirPerp.lineDir] = clickPos[drawDirPerp.lineDir];
 
+		// up / left
 		node = myself.gameBoard[nodePos.x][nodePos.y];
-		if (clickPos[drawDir.lineDir] > node.leftPoint[drawDir.lineDir]) {
-			for (; node.neighbor[Node[drawDir.nodeDir[0]]]; node = node.neighbor[Node[drawDir.nodeDir[0]]]);
-		} else {
-			for (; node.neighbor[Node[drawDir.nodeDir[0]]] && !node.neighbor[Node[drawDir.nodeDir[0]]].neighbor[Node.UP]; node = node.neighbor[Node[drawDir.nodeDir[0]]]);
+		var tmpPos = nodePos.clone();
+		if (clickPos[drawDir.lineDir] == node.leftPoint[drawDir.lineDir]) { // click on the border of the perpendicular direction
+			if (nodePos[drawDir.lineDir] > 0) {
+				tmpPos[drawDir.lineDir]--;
+				node = myself.gameBoard[tmpPos.x][tmpPos.y];
+			} else {
+				node = null;
+			}
 		}
-		endPoint[drawDir.lineDir] = node.leftPoint[drawDir.lineDir];
-		var newLine = new Line(clickPos.x, clickPos.y, endPoint.x, endPoint.y, myself.lineSpeed);
-		myself.lines.push(newLine);
-		game.currLines.push(newLine);
+		if (node && node.hasBalls) {
+			if (clickPos[drawDirPerp.lineDir] == node.leftPoint[drawDirPerp.lineDir]) {  // click on the border of the same direction
+				if (nodePos[drawDirPerp.lineDir] > 0) {
+					tmpPos = nodePos.clone();
+					tmpPos[drawDir.lineDir]--;
+					if (tmpPos.x >= 0 && tmpPos.y >= 0) {
+					    var btmOrRight = myself.gameBoard[tmpPos.x][tmpPos.y];
+					    var topOrLeft = btmOrRight.neighbor[Node[drawDirPerp.nodeDir[0]]];
+					    if (topOrLeft) {
+					        for (tmpPos[drawDir.lineDir]--; tmpPos.x >= 0 && tmpPos.y >= 0; tmpPos[drawDir.lineDir]--) {
+					            btmOrRight = myself.gameBoard[tmpPos.x][tmpPos.y];
+					            topOrLeft = btmOrRight.neighbor[Node[drawDirPerp.nodeDir[0]]];
+					            if (!topOrLeft || (!topOrLeft.neighbor[Node[drawDir.nodeDir[1]]] && !btmOrRight.neighbor[Node[drawDir.nodeDir[1]]])) {
+					                break;
+					            }
+					        }
+					    }
+					}
+					if (tmpPos.x >= 0 && tmpPos.y >= 0) {
+						node = myself.gameBoard[tmpPos.x][tmpPos.y];
+					} else {
+						node = null;
+					}
+				}
+			} else { // didn't click on borders
+				for (; node; node = node.neighbor[Node[drawDir.nodeDir[0]]], tmpPos[drawDir.lineDir]--);
+				if (tmpPos.x >= 0 && tmpPos.y >= 0) {
+					node = myself.gameBoard[tmpPos.x][tmpPos.y];
+				} else {
+					node = null;
+				}
+			}
 
-		node = myself.gameBoard[nodePos.x][nodePos.y];
-		if (clickPos[drawDirPerp.lineDir] > node.leftPoint[drawDirPerp.lineDir]) {
-			for (; node.neighbor[Node[drawDir.nodeDir[1]]]; node = node.neighbor[Node[drawDir.nodeDir[1]]]);
-		} else {
-			for (; node.neighbor[Node[drawDir.nodeDir[1]]] && !node.neighbor[Node[drawDir.nodeDir[1]]].neighbor[Node.LEFT]; node = node.neighbor[Node[drawDir.nodeDir[1]]]);
+			endPoint[drawDir.lineDir] = node ? node.rightPoint[drawDir.lineDir] : 1;
+			if (clickPos[drawDir.lineDir] != endPoint[drawDir.lineDir]) {
+				newLine = new Line(clickPos.x, clickPos.y, endPoint.x, endPoint.y, myself.lineSpeed);
+				myself.lines.push(newLine);
+				game.currLines.push(newLine);
+			}
 		}
-		endPoint[drawDir.lineDir] = node.rightPoint[drawDir.lineDir];
-		newLine = new Line(clickPos.x, clickPos.y, endPoint.x, endPoint.y, myself.lineSpeed);
-		myself.lines.push(newLine);
-		game.currLines.push(newLine);
+		
+		// down / right
+		node = myself.gameBoard[nodePos.x][nodePos.y];
+		if (node.hasBalls) {
+			if (clickPos[drawDirPerp.lineDir] == node.leftPoint[drawDirPerp.lineDir]) {  // click on the border of the same direction
+				if (nodePos[drawDirPerp.lineDir] > 0) {
+					tmpPos = nodePos.clone();
+					tmpPos[drawDir.lineDir]++;
+					if (tmpPos.x < myself.gameBoard.length && tmpPos.y < myself.gameBoard[tmpPos.x].length) {
+					    if (topOrLeft) {
+					        for (; tmpPos.x < myself.gameBoard.length && tmpPos.y < myself.gameBoard[tmpPos.x].length; tmpPos[drawDir.lineDir]++) {
+					            var btmOrRight = myself.gameBoard[tmpPos.x][tmpPos.y];
+					            var topOrLeft = btmOrRight.neighbor[Node[drawDirPerp.nodeDir[0]]];
+					            if (!topOrLeft || (!topOrLeft.neighbor[Node[drawDir.nodeDir[0]]] && !btmOrRight.neighbor[Node[drawDir.nodeDir[0]]])) {
+					                break;
+					            }
+					        }
+					    }
+					}
+					if (tmpPos.x < myself.gameBoard.length && tmpPos.y < myself.gameBoard[tmpPos.x].length) {
+						node = myself.gameBoard[tmpPos.x][tmpPos.y];
+					} else {
+						node = null;
+					}
+				}
+			} else { // didn't click on borders
+				for (tmpPos = nodePos.clone(); node; node = node.neighbor[Node[drawDir.nodeDir[1]]], tmpPos[drawDir.lineDir]++);
+				if (tmpPos.x < myself.gameBoard.length && tmpPos.y < myself.gameBoard[tmpPos.x].length) {
+					node = myself.gameBoard[tmpPos.x][tmpPos.y];
+				} else {
+					node = null;
+				}
+			}
+			var dimension = new Point(myself.gameWidth - 1, myself.gameHeight - 1);
+			endPoint[drawDir.lineDir] = node ? node.leftPoint[drawDir.lineDir] : dimension[drawDir.lineDir];
+			if (clickPos[drawDir.lineDir] != endPoint[drawDir.lineDir]) {
+				newLine = new Line(clickPos.x, clickPos.y, endPoint.x, endPoint.y, myself.lineSpeed);
+				myself.lines.push(newLine);
+				game.currLines.push(newLine);
+			}
+		}
 	}
 
 	function update() {
@@ -416,27 +489,6 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		var c = myself.canvas[myself.display];
 		var ctx = c.getContext("2d");
 		ctx.clearRect(0, 0, myself.gameWidth, myself.gameHeight);
-
-		// gravity
-		for (var i = 0; i < game.gravity.length; i++) {
-			var g = myself.gravity[i];
-			var grd = ctx.createRadialGradient(g.center.x, g.center.y, 0, g.center.x, g.center.y, g.radius);
-			grd.addColorStop(0, "black");
-			grd.addColorStop(1, "rgba(0, 0, 0, 0)");
-			ctx.fillStyle = grd;
-			ctx.beginPath();
-			ctx.arc(g.center.x, g.center.y, g.radius, 0, Math.PI * 2);
-			ctx.fill();
-		}
-
-		// balls
-		ctx.fillStyle = "red";
-		ctx.beginPath();
-		for (var i = 0; i < myself.balls.length; i++) {
-			ctx.arc(myself.balls[i].position.x, myself.balls[i].position.y, myself.balls[i].radius, 0, Math.PI * 2);
-			ctx.closePath();
-		}
-		ctx.fill();
 
 		// lines
 		ctx.beginPath();
@@ -483,6 +535,27 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 					ctx.rect(x, y, width, height);
 				}
 			}
+		}
+		ctx.fill();
+
+		// gravity
+		for (var i = 0; i < game.gravity.length; i++) {
+			var g = myself.gravity[i];
+			var grd = ctx.createRadialGradient(g.center.x, g.center.y, 0, g.center.x, g.center.y, g.radius);
+			grd.addColorStop(0, "black");
+			grd.addColorStop(1, "rgba(0, 0, 0, 0)");
+			ctx.fillStyle = grd;
+			ctx.beginPath();
+			ctx.arc(g.center.x, g.center.y, g.radius, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		// balls
+		ctx.fillStyle = "red";
+		ctx.beginPath();
+		for (var i = 0; i < myself.balls.length; i++) {
+			ctx.arc(myself.balls[i].position.x, myself.balls[i].position.y, myself.balls[i].radius, 0, Math.PI * 2);
+			ctx.closePath();
 		}
 		ctx.fill();
 	}
