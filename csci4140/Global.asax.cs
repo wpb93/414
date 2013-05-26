@@ -1,5 +1,7 @@
-﻿using System;
+﻿using csci4140.Models;
+using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Web;
 using System.Web.Http;
@@ -23,6 +25,9 @@ namespace csci4140
             RouteConfig.RegisterRoutes(RouteTable.Routes);
             BundleConfig.RegisterBundles(BundleTable.Bundles);
             AuthConfig.RegisterAuth();
+
+            //Database.SetInitializer<UsersContext>(new UserDbInit());
+            //new UsersContext().UserProfiles.Find(1);
         }
     }
 }

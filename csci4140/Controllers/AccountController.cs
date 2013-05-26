@@ -93,7 +93,7 @@ namespace csci4140.Controllers
                 // 尝试注册用户
                 try
                 {
-                    WebSecurity.CreateUserAndAccount(model.UserName, model.Password);
+                    WebSecurity.CreateUserAndAccount(model.UserName, model.Password, new { Rating = 1000 });
                     WebSecurity.Login(model.UserName, model.Password);
                     return RedirectToAction("Lobby", "Game");
                 }
@@ -144,7 +144,7 @@ namespace csci4140.Controllers
             ViewBag.StatusMessage =
                 message == ManageMessageId.ChangePasswordSuccess ? "Your password has been changed."
                 : message == ManageMessageId.SetPasswordSuccess ? "Password setted."
-                : message == ManageMessageId.RemoveLoginSuccess ? "Deleted external login.。"
+                : message == ManageMessageId.RemoveLoginSuccess ? "Deleted external login."
                 : "";
             ViewBag.HasLocalPassword = OAuthWebSecurity.HasLocalAccount(WebSecurity.GetUserId(User.Identity.Name));
             ViewBag.ReturnUrl = Url.Action("Manage");
