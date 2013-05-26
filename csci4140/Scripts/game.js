@@ -391,9 +391,9 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		}
 		if (node && node.hasBalls) {
 			if (clickPos[drawDirPerp.lineDir] == node.leftPoint[drawDirPerp.lineDir]) {  // click on the border of the same direction
-				if (nodePos[drawDirPerp.lineDir] > 0) {
+			    if (nodePos[drawDirPerp.lineDir] > 0 && node.neighbor[Node[drawDirPerp.nodeDir[0]]]) {
 					//tmpPos = nodePos.clone();
-					if (perp) tmpPos[drawDir.lineDir]--;
+					//if (perp) tmpPos[drawDir.lineDir]--;
 					if (tmpPos.x >= 0 && tmpPos.y >= 0) {
 					    var btmOrRight = myself.gameBoard[tmpPos.x][tmpPos.y];
 					    var topOrLeft = btmOrRight.neighbor[Node[drawDirPerp.nodeDir[0]]];
@@ -434,10 +434,10 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		node = myself.gameBoard[nodePos.x][nodePos.y];
 		tmpPos = nodePos.clone();
 		if (node.hasBalls) {
-			if (clickPos[drawDirPerp.lineDir] == node.leftPoint[drawDirPerp.lineDir]) {  // click on the border of the same direction
-				if (nodePos[drawDirPerp.lineDir] > 0) {
+			if (paral) {  // click on the border of the same direction
+			    if (node.neighbor[Node[drawDirPerp.nodeDir[0]]]) {
 					//tmpPos = nodePos.clone();
-					if (perp) tmpPos[drawDir.lineDir]++;
+					tmpPos[drawDir.lineDir]++;
 					if (tmpPos.x < myself.gameBoard.length && tmpPos.y < myself.gameBoard[tmpPos.x].length) {
 					    var btmOrRight = myself.gameBoard[tmpPos.x][tmpPos.y];
 					    var topOrLeft = btmOrRight.neighbor[Node[drawDirPerp.nodeDir[0]]];
@@ -494,13 +494,29 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		var c = myself.canvas[myself.display];
 		var ctx = c.getContext("2d");
 		ctx.clearRect(0, 0, myself.gameWidth, myself.gameHeight);
-
-		// lines
-		ctx.beginPath();
 		ctx.lineWidth = myself.lineWidth;
+
+	    // lines
+		ctx.strokeStyle = "black";
+		ctx.beginPath();
 		for (i = 0; i < myself.lines.length; i++) {
-			ctx.moveTo(myself.lines[i].startPoint.x, myself.lines[i].startPoint.y);
-			ctx.lineTo(myself.lines[i].drawPoint.x, myself.lines[i].drawPoint.y);
+		    var line = myself.lines[i];
+		    if (line.finished) {
+		        ctx.moveTo(line.startPoint.x, line.startPoint.y);
+		        ctx.lineTo(line.drawPoint.x, line.drawPoint.y);
+		    }
+		}
+		ctx.stroke();
+
+	    // lines
+		ctx.strokeStyle = "blue";
+		ctx.beginPath();
+		for (i = 0; i < myself.lines.length; i++) {
+		    var line = myself.lines[i];
+		    if (!line.finished) {
+		        ctx.moveTo(line.startPoint.x, line.startPoint.y);
+		        ctx.lineTo(line.drawPoint.x, line.drawPoint.y);
+		    }
 		}
 		ctx.stroke();
 
