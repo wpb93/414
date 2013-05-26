@@ -83,3 +83,79 @@ function curve() {
 		game.gravity.shift();
 	}, 5000);
 }
+
+function hole() {
+    var container = document.createElement("div");
+    container.addEventListener("click",p1, false);
+    container.addEventListener("contextmenu", p1, false);
+    var canvasDiv = document.getElementById('gameCanvas');
+    container.style.left = canvasDiv.clientLeft + parseInt(Math.random() * (game.gameWidth - 200)) + "px";
+    container.style.top = canvasDiv.clientTop + parseInt(Math.random() * (game.gameHeight - 240)) + "px";
+    container.style.position = "absolute";
+    var image = document.createElement("img");
+    image.style.height = "200px";
+    image.style.width = "240px";
+    image.src = "hole.png";
+    container.appendChild(image);
+    var body = document.getElementsByTagName("body")[0];
+    body.appendChild(container);
+    setTimeout(function () {
+        body.removeChild(container);
+    }, 10000);
+}
+
+function p1(e) {
+    e.preventDefault();
+}
+
+function shake() {
+	var j=0;
+	var x = document.getElementById("gameCanvas");
+	var l = parseInt(x.style.left);
+	var t = parseInt(x.style.top);
+	function shakeMyAss() {
+		setTimeout(function() {
+			x.style.left = (l + 10) + 'px';
+			setTimeout(function() {
+				x.style.left = l + 'px';
+			},Math.floor((Math.random()*30)+30));
+		},Math.floor((Math.random()*30)+30));
+		setTimeout(function() {
+			x.style.top = (t - 10) + 'px';
+			setTimeout(function() {
+				x.style.top = t + 'px';
+			},Math.floor((Math.random()*30)+30));
+		},Math.floor((Math.random()*30)+30));
+		setTimeout(function() {
+			x.style.top = (t + 10) + 'px';
+			setTimeout(function() {
+				x.style.top = t + 'px';
+			},Math.floor((Math.random()*30)+30));
+		},Math.floor((Math.random()*30)+30));
+		setTimeout(function() {
+			x.style.left = (l - 10) + 'px';
+			setTimeout(function() {
+				x.style.left = l + 'px';
+			},Math.floor((Math.random()*30)+30));
+		},Math.floor((Math.random()*30)+30));
+		if (j++<200) {
+			setTimeout(shakeMyAss,Math.floor((Math.random()*30)+30));
+		}
+		else {
+			x.style.top = t + 'px';
+			x.style.left = l + 'px';
+		}
+	}
+	shakeMyAss();
+}
+function initButton() {
+    var buttonDiv = document.getElementById("buttonContainer");
+    var canvasDiv = document.getElementById("gameCanvas");
+    buttonDiv.style.top = (parseInt(canvasDiv.style.top) + parseInt(canvasDiv.offsetHeight) + parseInt(canvasDiv.style.height)) + 'px';
+    buttonDiv.style.left = canvasDiv.style.left;
+    buttonDiv.style.position = "absolute";
+
+}
+
+
+window.addEventListener("load", initButton, false);

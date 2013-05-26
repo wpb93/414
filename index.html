@@ -7,13 +7,17 @@
 		<script type="text/javascript" src="item.js"></script>
 	</head>
 	<body>
-		<div id="gameCanvas">
-			<canvas class="game"></canvas>
-			<canvas class="game"></canvas>
+		<div id="gameCanvas" style="position:relative;top:10px;left:10px;">
+    		<canvas class="game"></canvas>
+    		<canvas class="game"></canvas>
 		</div>
-		<button onclick="accelerate(2)">accelerate</button>
-		<button onclick="bigger(2)">bigger</button>
-		<button onclick="split()">split</button>
-		<button onclick="curve()">curve</button>
+        <div id="buttonContainer">
+		    <button onclick="accelerate(2)">accelerate</button>
+		    <button onclick="bigger(2)">bigger</button>
+		    <button onclick="split()">split</button>
+		    <button onclick="curve()">curve</button>
+            <button onclick="hole()">hole</button>
+		    <button onclick="shake()">shake</button>
+        </div>
 	</body>
 </html>
