@@ -1,43 +1,61 @@
-window.addEventListener("load",init_score,false);
+window.addEventListener("load",initScore,false);
 var multiplier;
-var my_score;
+var myScore;
 var interval;
 var decrease;
-var start_time;
 var tmpdiv;
-function init_score() {
+var curScore = 0;
+var curCover = 0;
+function initScore() {
 	multiplier = 4.0;
 	interval = 30;
 	decrease = 0.0025;
 	tmpdiv = document.getElementById("score");
-	tmpdiv.innerHTML="hehe";
-	var d = new Date();
-	start_time = d.getTime();
-	setTimeout(decrease_bonus,interval);
+	tmpdiv.innerHTML = "score:" + curScore + "已搞定的面积：0%";
+	setTimeout(decreaseBonus, interval);
+	setInterval(displayScore, interval);
 }
 
 
-function decrease_bonus() {
+function decreaseBonus() {
 	multiplier = multiplier - decrease;
 	decrease = decrease - 0.000001;
 	if (multiplier <= 1) {
-		multiplier = 1;
-		display_multiplier();
-		return;
+	    multiplier = 1;
+	    return;
 	}
-	display_multiplier();
-	setTimeout(decrease_bonus,interval);
+	setTimeout(decreaseBonus,interval);
 }
 
-function display_multiplier() {
-	tmpdiv.innerHTML=multiplier;
+function displayScore() {
+    var percent = cover();
+    if (percent != curCover) {
+        curScore += (parseFloat(percent - curCover) * multiplier).toFixed(3);
+        curCover = percent;
+        tmpdiv.innerHTML = "score:" + curScore + "已搞定的面积：" + percent.toFixed(2) + "%";
+    }
+    //tmpdiv.innerHTML += "%";
 }
 
 function calculateScore(winnerScore, loserScore) {
-	var base = 10;
-	var most = 200;
-	var result = parseInt(100*Math.pow((parseFloat(loserScore)+500.0)/(parseFloat(winnerScore)+0.333),2));
-	if (result < base) return base;
-	if (result > most) return most;
-	return result;
+    var base = 10;
+    var most = 200;
+    var result = parseInt(100*Math.pow((parseFloat(loserScore)+500.0)/(parseFloat(winnerScore)+0.333),2));
+    if (result < base) return base;
+    if (result > most) return most;
+    return result;
 }
+
+function cover() {
+    var cover = 0;
+    for (var i = 0; i < game.gameBoard.length; i++) {
+        for (var j = 0; j < game.gameBoard[i].length; j++) {
+            if (game.gameBoard[i][j].hasBalls == false) {
+                cover += (game.gameBoard[i][j].rightPoint.x - game.gameBoard[i][j].leftPoint.x) * (game.gameBoard[i][j].rightPoint.y - game.gameBoard[i][j].leftPoint.y);
+            }
+        }
+    }
+    return (parseFloat(cover) / (game.gameHeight * game.gameWidth)) * 100;
+}
+
+
