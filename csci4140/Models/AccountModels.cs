@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity;
+using System.Data.Entity.ModelConfiguration.Conventions;
 using System.Globalization;
 using System.Web.Security;
+using WebMatrix.WebData;
 
 namespace csci4140.Models
 {
@@ -16,6 +18,11 @@ namespace csci4140.Models
         }
 
         public DbSet<UserProfile> UserProfiles { get; set; }
+
+        protected override void OnModelCreating(DbModelBuilder modelBuilder)
+        {
+            modelBuilder.Conventions.Remove<PluralizingTableNameConvention>();
+        }
     }
 
     [Table("UserProfile")]
@@ -25,6 +32,21 @@ namespace csci4140.Models
         [DatabaseGeneratedAttribute(DatabaseGeneratedOption.Identity)]
         public int UserId { get; set; }
         public string UserName { get; set; }
+        public int Rating { get; set; }
+    }
+
+    public class UserDbInit : DropCreateDatabaseAlways<UsersContext>
+    {
+        protected override void Seed(UsersContext context)
+        {
+            SeedMembership();
+        }
+
+        private void SeedMembership()
+        {
+            WebSecurity.InitializeDatabaseConnection("DefaultConnection",
+                "UserProfile", "UserId", "UserName", autoCreateTables: true);
+        }
     }
 
     public class RegisterExternalLoginModel
