@@ -3,15 +3,22 @@
 	<head>
 		<title>Divide</title>
 		<link type="text/css" rel="game.css" />
+		<link rel="stylesheet" type="text/css" href="progressbar.css">
 		<script type="text/javascript" src="game.js"></script>
 		<script type="text/javascript" src="item.js"></script>
         <script type="text/javascript" src="score.js"></script>
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.0/jquery.min.js"></script>
+        <script type="text/javascript" src="bar.js"></script>
 	</head>
 	<body>
         <div id="score"></div>
 		<div id="gameCanvas" style="position:relative;top:10px;left:10px;">
     		<canvas class="game"></canvas>
     		<canvas class="game"></canvas>
+		</div>
+		<div class="meter" style="width: 200px">
+			<span id="bar" style="width: 0%"></span>
+			<p id="percent"></p>
 		</div>
         <div id="buttonContainer">
 		    <button onclick="accelerate(2)">accelerate</button>
