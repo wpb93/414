@@ -6,13 +6,33 @@ function between(m, a, b, inclusive, cmp) {
 			return a == b ? 0 : (a < b ? -1 : 1);
 		};
 	}
-	var diff = cmp(a, m) * cmp(m, b);
-	return inclusive ? diff >= 0 : diff > 0;
+	if (!inclusive) {
+		inclusive = [false, false];
+	}
+	if (cmp(a, b) > 0) {
+		var t = a;
+		a = b;
+		b = t;
+	}
+	var diffAM = cmp(a, m);
+	var diffMB = cmp(m, b);
+	var diff = diffAM * diffMB;
+	if (diff > 0) return true;
+	if (diff < 0) return false;
+	if (inclusive[0] && inclusive[1]) return true;
+	if (!inclusive[0] && !inclusive[1]) return false;
+	if (inclusive[0] && diffAM == 0) return true;
+	if (inclusive[1] && diffMB == 0) return true;
+	return false;
 }
 
 function Point(x, y) {
 	this.x = x;
 	this.y = y;
+	var myself = this;
+	this.clone = function () {
+		return new Point(myself.x, myself.y);
+	}
 }
 
 function Ball(position_x, position_y, speed_x, speed_y, ballRadius) {
@@ -105,6 +125,7 @@ function Line(start_x, start_y, end_x, end_y, drawSpeed) {
 				if (game.currLines[0] == myself) game.currLines.shift();
 				else game.currLines.pop();
 				myself.finished = true;
+				game.addNode(myself);
 			}
 			return;
 		}
@@ -114,6 +135,7 @@ function Line(start_x, start_y, end_x, end_y, drawSpeed) {
 			if (game.currLines[0] == myself) game.currLines.shift();
 			else game.currLines.pop();
 			myself.finished = true;
+			game.addNode(myself);
 		}
 	};
 
@@ -134,8 +156,7 @@ Node.LEFT = 3;
 function Node(leftPoint, rightPoint) {
 	this.leftPoint = leftPoint;
 	this.rightPoint = rightPoint;
-	this.hasBalls = false;
-	this.visited = false;
+	this.hasBalls = true;
 	this.neighbor = new Array(4);
 	for (var i = 0; i < this.neighbor.length; i++) {
 		this.neighbor[i] = null;
@@ -209,30 +230,117 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		setInterval(render, 1000.0 / myself.fps);
 	};
 
+	this.addNode = function (line) {
+		var linePoint = line.startPoint;
+		var nodePos = getNode(linePoint);
+		//console.log((myself.gameBoard[nodePos.x][nodePos.y]));
+		var node = game.gameBoard[nodePos.x][nodePos.y];
+		var nodePoint = node.leftPoint;
+
+		if (linePoint.y > nodePoint.y) {   //add row
+			var newNode;
+			for (var i = 0; i < myself.gameBoard.length; i++) {
+				var original = myself.gameBoard[i][nodePos.y];
+				newNode = new Node(original.leftPoint.clone(), new Point(original.rightPoint.x, linePoint.y));
+				original.leftPoint.y = linePoint.y;
+				myself.gameBoard[i].splice(nodePos.y, 0, newNode);
+			}
+			for (i = 0; i < myself.gameBoard.length; i++) {
+				var newNode = myself.gameBoard[i][nodePos.y];
+
+				var btm = myself.gameBoard[i][nodePos.y + 1];
+				if ((newNode.neighbor[Node.UP] = btm.neighbor[Node.UP])) {
+					myself.gameBoard[i][nodePos.y - 1].neighbor[Node.DOWN] = newNode;
+				}
+
+				newNode.neighbor[Node.DOWN] = btm;
+				btm.neighbor[Node.UP] = newNode;
+
+				newNode.neighbor[Node.LEFT] = btm.neighbor[Node.LEFT] ? myself.gameBoard[i - 1][nodePos.y] : null;
+
+				newNode.neighbor[Node.RIGHT] = btm.neighbor[Node.RIGHT] ? myself.gameBoard[i + 1][nodePos.y] : null;
+			}
+			nodePos.y++;
+		}
+
+		if (linePoint.x > nodePoint.x) {    //add column
+			var newCol = new Array(myself.gameBoard[nodePos.x].length);
+			for (var i = 0; i < newCol.length; i++) {
+				var original = myself.gameBoard[nodePos.x][i];
+				newCol[i] = new Node(original.leftPoint.clone(), new Point(linePoint.x, original.rightPoint.y));
+				original.leftPoint.x = linePoint.x;
+			}
+			myself.gameBoard.splice(nodePos.x, 0, newCol);
+			for (i = 0; i < newCol.length; i++) {
+				var right = myself.gameBoard[nodePos.x + 1][i];
+				if ((newCol[i].neighbor[Node.LEFT] = right.neighbor[Node.LEFT])) {
+					myself.gameBoard[nodePos.x - 1][i].neighbor[Node.RIGHT] = newCol[i];
+				}
+
+				newCol[i].neighbor[Node.RIGHT] = right;
+				right.neighbor[Node.LEFT] = newCol[i];
+
+				newCol[i].neighbor[Node.UP] = right.neighbor[Node.UP] ? myself.gameBoard[nodePos.x][i - 1] : null;
+
+				newCol[i].neighbor[Node.DOWN] = right.neighbor[Node.DOWN] ? myself.gameBoard[nodePos.x][i + 1] : null;
+			}
+			nodePos.x++;
+		}
+
+		var nodes = [];
+		if (line.direction == Line.HORIZONTAL) {
+			var dir = line.startPoint.x > line.endPoint.x ? -1 : 1;
+			var point = line.startPoint.x > line.endPoint.x ? 'leftPoint' : 'rightPoint';
+			var tmpNode = nodePos.clone();
+			if (dir < 0) {
+				tmpNode.x += dir;
+			}
+			for (; myself.gameBoard[tmpNode.x] && line.endPoint.x * dir >= myself.gameBoard[tmpNode.x][tmpNode.y][point].x * dir; tmpNode.x += dir) {
+				var top = myself.gameBoard[tmpNode.x][tmpNode.y - 1];
+				var btm = myself.gameBoard[tmpNode.x][tmpNode.y];
+				if (top) top.neighbor[Node.DOWN] = null;
+				btm.neighbor[Node.UP] = null;
+			}
+			console.log(nodes);
+		} else {
+			var dir = line.startPoint.y > line.endPoint.y ? -1 : 1;
+			var point = line.startPoint.y > line.endPoint.y ? 'leftPoint' : 'rightPoint';
+			var tmpNode = nodePos.clone();
+			if (dir < 0) {
+				tmpNode.y += dir;
+			}
+			for (; myself.gameBoard[tmpNode.x][tmpNode.y] && line.endPoint.y * dir >= myself.gameBoard[tmpNode.x][tmpNode.y][point].y * dir; tmpNode.y += dir) {
+				var left = tmpNode.x - 1 >= 0 ? myself.gameBoard[tmpNode.x - 1][tmpNode.y] : null;
+				var right = myself.gameBoard[tmpNode.x][tmpNode.y];
+				if (left) left.neighbor[Node.RIGHT] = null;
+				right.neighbor[Node.LEFT] = null;
+			}
+		}
+		console.log(myself.gameBoard.length + " " + myself.gameBoard[0].length);
+	};
+
 	function getNode(point) {
 		for (var i = 0; i < myself.gameBoard.length; i++) {
-			for (var j = 0; j < myself.gameBoard[i].length; j++) {
-				if (between(point.x, myself.gameBoard[i][j].leftPoint.x, myself.gameBoard[i][j].rightPoint.x)
-						&& between(point.y, myself.gameBoard[i][j].leftPoint.y, myself.gameBoard[i][j].rightPoint.y)) {
-					return new Point(i, j);
+			if (between(point.x, myself.gameBoard[i][0].leftPoint.x, myself.gameBoard[i][0].rightPoint.x, [true, false])) {
+				for (var j = 0; j < myself.gameBoard[i].length; j++) {
+					if (between(point.y, myself.gameBoard[i][j].leftPoint.y, myself.gameBoard[i][j].rightPoint.y, [true, false])) {
+						return new Point(i, j);
+					}
 				}
 			}
 		}
 	}
 
-	function markHasBalls(point) {
-		for (var i = 0; i < gameBoard.length; i++) {
-			for (var j = 0; j < gameBoard[i].length; j++) {
-				gameBoard[i][j].hasBalls = false;
-			}
+	function dfsNodeTable(node) {
+		if (!node || node.hasBalls) return;
+		node.hasBalls = true;
+		for (var k = 0; k < node.neighbor.length; k++) {
+			dfsNodeTable(node.neighbor[k]);
 		}
-		function dfsNodeTable(node) {
-			if (!node || node.hasBalls) return;
-			node.hasBalls = true;
-			for (var k = 0; k < node.neighbor.length; k++) {
-				dfsNodeTable(node.neighbor[k]);
-			}
-		} (getNode(point));
+	}
+
+	function markHasBalls(nodePos) {
+		dfsNodeTable(myself.gameBoard[nodePos.x][nodePos.y]);
 	}
 
 	function drawNewLine(e) {
@@ -261,18 +369,28 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 
 		var clickPos = new Point(e.offsetX, e.offsetY);
 		var nodePos = getNode(clickPos);
-		if (!nodePos) return;
+		if (!nodePos || !myself.gameBoard[nodePos.x][nodePos.y].hasBalls) return;
 		var node;
 		var endPoint = new Point();
 		endPoint[drawDirPerp.lineDir] = clickPos[drawDirPerp.lineDir];
 
-		for (node = myself.gameBoard[nodePos.x][nodePos.y]; node.neighbor[Node[drawDir.nodeDir[0]]]; node = node.neighbor[Node[drawDir.nodeDir[0]]]);
+		node = myself.gameBoard[nodePos.x][nodePos.y];
+		if (clickPos[drawDir.lineDir] > node.leftPoint[drawDir.lineDir]) {
+			for (; node.neighbor[Node[drawDir.nodeDir[0]]]; node = node.neighbor[Node[drawDir.nodeDir[0]]]);
+		} else {
+			for (; node.neighbor[Node[drawDir.nodeDir[0]]] && !node.neighbor[Node[drawDir.nodeDir[0]]].neighbor[Node.UP]; node = node.neighbor[Node[drawDir.nodeDir[0]]]);
+		}
 		endPoint[drawDir.lineDir] = node.leftPoint[drawDir.lineDir];
 		var newLine = new Line(clickPos.x, clickPos.y, endPoint.x, endPoint.y, myself.lineSpeed);
 		myself.lines.push(newLine);
 		game.currLines.push(newLine);
-
-		for (node = myself.gameBoard[nodePos.x][nodePos.y]; node.neighbor[Node[drawDir.nodeDir[1]]]; node = node.neighbor[Node[drawDir.nodeDir[1]]]);
+		
+		node = myself.gameBoard[nodePos.x][nodePos.y];
+		if (clickPos[drawDirPerp.lineDir] > node.leftPoint[drawDirPerp.lineDir]) {
+			for (; node.neighbor[Node[drawDir.nodeDir[1]]]; node = node.neighbor[Node[drawDir.nodeDir[1]]]);
+		} else {
+		    for (; node.neighbor[Node[drawDir.nodeDir[1]]] && !node.neighbor[Node[drawDir.nodeDir[1]]].neighbor[Node.LEFT]; node = node.neighbor[Node[drawDir.nodeDir[1]]]);
+		}
 		endPoint[drawDir.lineDir] = node.rightPoint[drawDir.lineDir];
 		newLine = new Line(clickPos.x, clickPos.y, endPoint.x, endPoint.y, myself.lineSpeed);
 		myself.lines.push(newLine);
@@ -280,9 +398,9 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 	}
 
 	function update() {
-	    for (var i = 0; i < myself.gravity.length; i++) {
-	        myself.gravity[i].attract();
-	    }
+		for (var i = 0; i < myself.gravity.length; i++) {
+			myself.gravity[i].attract();
+		}
 		for (var i = 0; i < myself.balls.length; i++) {
 			myself.balls[i].move();
 		}
@@ -299,17 +417,19 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		var ctx = c.getContext("2d");
 		ctx.clearRect(0, 0, myself.gameWidth, myself.gameHeight);
 
+		// gravity
 		for (var i = 0; i < game.gravity.length; i++) {
-		    var g = myself.gravity[i];
-		    var grd = ctx.createRadialGradient(g.center.x, g.center.y, 0, g.center.x, g.center.y, g.radius);
-		    grd.addColorStop(0, "black");
-		    grd.addColorStop(1, "rgba(0, 0, 0, 0)");
-		    ctx.fillStyle = grd;
-		    ctx.beginPath();
-		    ctx.arc(g.center.x, g.center.y, g.radius, 0, Math.PI * 2);
-		    ctx.fill();
+			var g = myself.gravity[i];
+			var grd = ctx.createRadialGradient(g.center.x, g.center.y, 0, g.center.x, g.center.y, g.radius);
+			grd.addColorStop(0, "black");
+			grd.addColorStop(1, "rgba(0, 0, 0, 0)");
+			ctx.fillStyle = grd;
+			ctx.beginPath();
+			ctx.arc(g.center.x, g.center.y, g.radius, 0, Math.PI * 2);
+			ctx.fill();
 		}
 
+		// balls
 		ctx.fillStyle = "red";
 		ctx.beginPath();
 		for (var i = 0; i < myself.balls.length; i++) {
@@ -318,6 +438,7 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		}
 		ctx.fill();
 
+		// lines
 		ctx.beginPath();
 		ctx.lineWidth = myself.lineWidth;
 		for (i = 0; i < myself.lines.length; i++) {
@@ -325,6 +446,45 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 			ctx.lineTo(myself.lines[i].drawPoint.x, myself.lines[i].drawPoint.y);
 		}
 		ctx.stroke();
+
+		// shades
+		for (var i = 0; i < myself.gameBoard.length; i++) {
+			for (var j = 0; j < myself.gameBoard[i].length; j++) {
+				myself.gameBoard[i][j].hasBalls = false;
+			}
+		}
+		for (i = 0; i < myself.balls.length; i++) {
+			markHasBalls(getNode(myself.balls[i].position));
+		}
+		ctx.fillStyle = "#BEBEBE";
+		ctx.beginPath();
+		for (var i = 0; i < myself.gameBoard.length; i++) {
+			for (var j = 0; j < myself.gameBoard[i].length; j++) {
+				var node = myself.gameBoard[i][j];
+				if (!node.hasBalls) {
+					var x = node.leftPoint.x;
+					var y = node.leftPoint.y;
+					var width = node.rightPoint.x - x;
+					var height = node.rightPoint.y - y;
+					if (j == 0 || (!node.neighbor[Node.UP] && myself.gameBoard[i][j - 1].hasBalls)) {
+						y++;
+						height--;
+					}
+					if (j == myself.gameBoard[i].length - 1 || (!node.neighbor[Node.DOWN] && myself.gameBoard[i][j + 1].hasBalls)) {
+						height--;
+					}
+					if (i == 0 || (!node.neighbor[Node.LEFT] && myself.gameBoard[i - 1][j].hasBalls)) {
+						x++;
+						width--;
+					}
+					if (i == myself.gameBoard.length - 1 || (!node.neighbor[Node.RIGHT] && myself.gameBoard[i + 1][j].hasBalls)) {
+						width--;
+					}
+					ctx.rect(x, y, width, height);
+				}
+			}
+		}
+		ctx.fill();
 	}
 }
 
