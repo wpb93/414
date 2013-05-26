@@ -182,7 +182,14 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 	this.updateRate = 80;
 	this.currLines = [];
 	this.gravity = [];
+	this.cover = 0;
+	this.score = 0;
 	var myself = this;
+	var multiplier = 4.0;
+	var decrease = 0.0025;
+	var updateID;
+	var renderID;
+	var decreaseID;
 	for (var i = 0; i < this.canvas.length; i++) {
 		this.canvas[i].style.display = 'none';
 		this.canvas[i].setAttribute('width', width);
@@ -226,8 +233,9 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		myself.canvasDiv.addEventListener("click", drawNewLine, false);
 		myself.canvasDiv.addEventListener("contextmenu", drawNewLine, false);
 
-		setInterval(update, 1000.0 / myself.updateRate);
-		setInterval(render, 1000.0 / myself.fps);
+		updateID = setInterval(update, 1000.0 / myself.updateRate);
+		renderID = setInterval(render, 1000.0 / myself.fps);
+		decreaseID = setInterval(decreaseBonus, 30);
 	};
 
 	this.addNode = function (line) {
@@ -351,6 +359,45 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 	function markHasBalls(nodePos) {
 		if (!nodePos) return;
 		dfsNodeTable(myself.gameBoard[nodePos.x][nodePos.y]);
+		var oldCover = myself.cover;
+		updateCover();
+		myself.score += (parseFloat(myself.cover - oldCover) * multiplier);
+		myself.displayScore();
+	}
+
+	function updateCover() {
+	    var cover = 0;
+	    for (var i = 0; i < myself.gameBoard.length; i++) {
+	        for (var j = 0; j < myself.gameBoard[i].length; j++) {
+	            if (myself.gameBoard[i][j].hasBalls == false) {
+	                cover += (myself.gameBoard[i][j].rightPoint.x - myself.gameBoard[i][j].leftPoint.x) * (myself.gameBoard[i][j].rightPoint.y - myself.gameBoard[i][j].leftPoint.y);
+	            }
+	        }
+	    }
+	    myself.cover = (parseFloat(cover) / (game.gameHeight * game.gameWidth)) * 100;
+	}
+
+	function decreaseBonus() {
+	    multiplier = multiplier - decrease;
+	    decrease = decrease - 0.000001;
+	    if (multiplier <= 1) {
+	        clearInterval(decreaseID);
+	    }
+	}
+
+	this.displayScore = function () { };
+
+	this.updateRanking = function (opposerScore, opposerRank) {
+
+	}
+
+	function rankDiff(winnerRank, loserRank) {
+	    var base = 10;
+	    var most = 200;
+	    var result = parseInt(100 * Math.pow((parseFloat(winnerRank) + 500.0) / (parseFloat(loserRank) + 0.333), 2));
+	    if (result < base) return base;
+	    if (result > most) return most;
+	    return result;
 	}
 
 	function drawNewLine(e) {

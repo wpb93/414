@@ -9,9 +9,9 @@ $(function () {
     });
 });
 
-var maxscore = 1000;
-var lastScore = 0;
-var score = 0;
+var maxEnergy = 1000;
+var lastEnergy = 0;
+var energy = 0;
 var bar;
 var percent;
 
@@ -20,25 +20,27 @@ function initBar() {
     bar = document.getElementById("bar");
     percent = document.getElementById("percent");
     setInterval(function () {
-        score += 1;
+        energy += 1;
     }, 1000);
 
     setInterval(updateBar, 1000);
 }
 
 function updateBar() {
-    console.log("lastScore = " + lastScore);
-    console.log("curScore = " + curScore);
-    var addScore = curScore - lastScore;
-    score += addScore;
-
-    if (score >= maxscore) {
-        score = maxscore;
+    var addEnergy = game.cover * 4 - lastEnergy;
+    energy += addEnergy;
+    lastEnergy = game.cover * 4;
+    if (energy >= maxEnergy) {
+        energy = maxEnergy;
     }
-    var width = 100 * score / maxscore;
-    percent.innerHTML = score + "/" + maxscore;
-    console.log(score + " " + maxscore);
+    energy = parseInt(energy);
+    var width = 100 * energy / maxEnergy;
+    percent.innerHTML = energy + "/" + maxEnergy;
     bar.style.width = width + "%";
+}
+
+function decreaseEnergy(decEnergy) {
+    energy -= decEnergy;
 }
 
 window.addEventListener("load", initBar, false);
