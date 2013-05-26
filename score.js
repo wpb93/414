@@ -30,9 +30,9 @@ function decreaseBonus() {
 function displayScore() {
     var percent = cover();
     if (percent != curCover) {
-        curScore += (parseFloat(percent - curCover) * multiplier).toFixed(3);
+        curScore += (parseFloat(percent - curCover) * multiplier);
         curCover = percent;
-        tmpdiv.innerHTML = "score:" + curScore + "已搞定的面积：" + percent.toFixed(2) + "%";
+        tmpdiv.innerHTML = "score:" + curScore.toFixed(3) + "已搞定的面积：" + percent.toFixed(2) + "%";
     }
     //tmpdiv.innerHTML += "%";
 }
