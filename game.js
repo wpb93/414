@@ -165,81 +165,133 @@ function Node(leftPoint, rightPoint) {
 }
 
 ////////////////////////
-function Bar(maxEnergy, energyPSecond, width, multipler) {
-    this.maxEnergy = 1000;
-    this.lastEnergy = 0;
-    this.energy = 0;
-    this.multipler = multipler;
-    this.eps = energyPSecond;
-    this.widht = width;
-    this.outer = document.getElementById("outer");
-    this.bar = document.getElementById("bar");
-    this.percent = document.getElementById("percent");
-    var myself = this;
+function Bar(initialEnergy, maxEnergy, energyPSecond, width, multipler) {
+	this.maxEnergy = 1000;
+	this.lastEnergy = 0;
+	this.energy = initialEnergy;
+	this.multipler = multipler;
+	this.width = width;
+	this.outer = document.getElementById("outer");
+	this.bar = document.getElementById("bar");
+	this.percent = document.getElementById("percent");
+	var eps = energyPSecond;
+	var updateIntervalId;
+	var myself = this;
 
-    var begin = function () {
-        myself.outer.style.width = myself.widht + "px";
-        setInterval(function () {
-            myself.energy += myself.eps;
-            myself.updateBar();
-        }, 1000);
+	var begin = function () {
+		myself.outer.style.width = myself.widht + "px";
+		updateIntervalId = setInterval(function () {
+		    myself.energy += eps;
+			myself.updateBar();
+		}, 1000);
 
-        //setInterval(updateBar, 1000);
-    }();
+		//setInterval(updateBar, 1000);
+	}();
 
-    this.decrease = function (decEnergy) {
-        myself.energy -= decEnergy;
-    };
+	this.pauseUpdate = function () {
+		clearInterval(updateIntervalId);
+	};
 
-    this.updateCover = function () {
-        var addEnergy = game.cover * myself.multipler - myself.lastEnergy;
-        if (addEnergy > 0) {
-            myself.energy += addEnergy;
-        }
-        myself.lastEnergy = game.cover * myself.multipler;
-    };
+	this.wakeUpUpdate = function () {
+		updateIntervalId = setInterval(function () {
+		    myself.energy += eps;
+			myself.updateBar();
+		}, 1000);
+	};
 
-    this.updateBar = function () {
-        if (myself.energy >= myself.maxEnergy) {
-            myself.energy = myself.maxEnergy;
-        }
-        myself.energy = parseInt(myself.energy);
-        var width = 100 * myself.energy / myself.maxEnergy;
-        myself.percent.innerHTML = myself.energy + "/" + myself.maxEnergy;
-        myself.bar.style.width = width + "%";
-        if (myself.energy < 80) {
-            item1.style.opacity = "0.4";
-            item2.style.opacity = "0.4";
-            item3.style.opacity = "0.4";
-            item4.style.opacity = "0.4";
-            item5.style.opacity = "0.4";
-            item6.style.opacity = "0.4";
-        }
-        if (myself.energy >= 80) {
-            item1.style.opacity = "1";
-            item2.style.opacity = "0.4";
-            item3.style.opacity = "0.4";
-            item4.style.opacity = "0.4";
-            item5.style.opacity = "0.4";
-            item6.style.opacity = "0.4";
-        }
-        if (myself.energy >= 150) {
-            item2.style.opacity = "1";
-            item3.style.opacity = "1";
-            item4.style.opacity = "0.4";
-            item5.style.opacity = "0.4";
-            item6.style.opacity = "0.4";
-        }
-        if (myself.energy >= 300) {
-            item4.style.opacity = "1";
-            item5.style.opacity = "0.4";
-            item6.style.opacity = "0.4";
-        }
-        if (myself.energy >= 350) {
-            item5.style.opacity = "1";
-            item6.style.opacity = "1";
-        }
-    }
+	this.decrease = function (decEnergy) {
+		myself.energy -= decEnergy;
+	};
+
+	this.updateCover = function () {
+		var addEnergy = game.cover * myself.multipler - myself.lastEnergy;
+		if (addEnergy > 0) {
+			myself.energy += addEnergy;
+		}
+		myself.lastEnergy = game.cover * myself.multipler;
+		myself.updateBar();
+	};
+
+	this.updateBar = function () {
+	    
+		if (myself.energy >= myself.maxEnergy) {
+			myself.energy = myself.maxEnergy;
+		}
+		myself.energy = parseInt(myself.energy);
+		var width = 100 * myself.energy / myself.maxEnergy;
+		myself.percent.innerHTML = myself.energy + "/" + myself.maxEnergy;
+		myself.bar.style.width = width + "%";
+		myself.checkItem();
+	}
+
+	this.checkItem = function(){
+		if (myself.energy < 80) {
+			for (var i = 1; i < 7; i++) {
+				var tagId = "item" + i;
+				var itemImg = document.getElementById(tagId);
+				itemImg.style.opacity = "0.4";
+			}
+		}
+		else if (myself.energy >= 80 && myself.energy < 150) {
+			for (var i = 1; i < 2; i++) {
+				var tagId = "item" + i;
+				var itemImg = document.getElementById(tagId);
+				if (itemImg.use) {
+					itemImg.style.opacity = "0.4";
+				} else {
+					itemImg.style.opacity = "1";
+				}
+			}
+			for (var j = i; j < 7; j++) {
+				var tagId = "item" + j;
+				var itemImg = document.getElementById(tagId);
+				itemImg.style.opacity = "0.4";
+			}
+		}
+		else if (myself.energy >= 150 && myself.energy < 300) {
+			for (var i = 1; i < 4; i++) {
+				var tagId = "item" + i;
+				var itemImg = document.getElementById(tagId);
+				if (itemImg.use) {
+					itemImg.style.opacity = "0.4";
+				} else {
+					itemImg.style.opacity = "1";
+				}
+			}
+			for (var j = i; j < 7; j++) {
+				var tagId = "item" + j;
+				var itemImg = document.getElementById(tagId);
+				itemImg.style.opacity = "0.4";
+			}
+		}
+		else if (myself.energy >= 300 && myself.energy < 350) {
+			for (var i = 1; i < 5; i++) {
+				var tagId = "item" + i;
+				var itemImg = document.getElementById(tagId);
+				if (itemImg.use) {
+					itemImg.style.opacity = "0.4";
+				} else {
+					itemImg.style.opacity = "1";
+				}
+			}
+			for (var j = i; j < 7; j++) {
+				var tagId = "item" + j;
+				var itemImg = document.getElementById(tagId);
+				itemImg.style.opacity = "0.4";
+			}
+		}
+		else if (myself.energy >= 350) {
+			for (var i = 1; i < 7; i++) {
+				var tagId = "item" + i;
+				var itemImg = document.getElementById(tagId);
+				if (itemImg.use) {
+					itemImg.style.opacity = "0.4";
+				} else {
+					itemImg.style.opacity = "1";
+				}
+			}
+		}
+	}
 }
 
 function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineSpeed, lineWidth, fps) {
@@ -262,8 +314,9 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 	this.gravity = [];
 	this.cover = 0;
 	this.score = 0;
-	var bar;
 	var myself = this;
+	var bar;
+	var initialEnergy = 0;
 	var multiplier = 4.0;
 	var decrease = 0.0025;
 	var updateID;
@@ -275,11 +328,12 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		this.canvas[i].setAttribute('height', height);
 	}
 	this.begin = function () {
-	    //new bar
-	    bar = new Bar(1000, 50, 1000, 4);
+		//new bar
+	    bar = new Bar(initialEnergy, 1000, 1, 1000, 4);
+
 		//new balls
 		myself.gameBoard = [[new Node(new Point(1, 1), new Point(myself.gameWidth - 1, myself.gameHeight - 1))]];
-		for (var i = 0; i < ballNumber; i++) {
+		for (var i = 0; i < myself.ballNumber; i++) {
 			var x = Math.random() * (myself.gameWidth - myself.ballRadius * 2) + myself.ballRadius;
 			var y = Math.random() * (myself.gameHeight - myself.ballRadius * 2) + myself.ballRadius;
 			var part = Math.random() * 0.4 * Math.PI;
@@ -317,6 +371,13 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		updateID = setInterval(update, 1000.0 / myself.updateRate);
 		renderID = setInterval(render, 1000.0 / myself.fps);
 		decreaseID = setInterval(decreaseBonus, 30);
+
+		item1.use = false;
+		item2.use = false;
+		item3.use = false;
+		item4.use = false;
+		item5.use = false;
+		item6.use = false;
 	};
 
 	this.addNode = function (line) {
@@ -408,28 +469,27 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		console.log(myself.gameBoard.length + " " + myself.gameBoard[0].length);
 
 		for (var i = 0; i < myself.gameBoard.length; i++) {
-		    for (var j = 0; j < myself.gameBoard[i].length; j++) {
-		        myself.gameBoard[i][j].hasBalls = false;
-		    }
+			for (var j = 0; j < myself.gameBoard[i].length; j++) {
+				myself.gameBoard[i][j].hasBalls = false;
+			}
 		}
 		for (i = 0; i < myself.balls.length; i++) {
-		    markHasBalls(getNode(myself.balls[i].position));
+			markHasBalls(getNode(myself.balls[i].position));
 		}
 		var oldCover = myself.cover;
 		updateCover();
 		myself.score += (parseFloat(myself.cover - oldCover) * multiplier);
 		myself.displayScore();
-	    ///////////////////////
+		///////////////////////
 		bar.updateCover();
-		bar.updateBar();
 	};
 
 	this.getEnergy = function () {
-	    return bar.energy;
+		return bar.energy;
 	};
 
 	this.decreaseEnergy = function (cost) {
-	    bar.decrease(cost);
+		bar.decrease(cost);
 	};
 
 	function getNode(point) {
@@ -458,23 +518,23 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 	}
 
 	function updateCover() {
-	    var cover = 0;
-	    for (var i = 0; i < myself.gameBoard.length; i++) {
-	        for (var j = 0; j < myself.gameBoard[i].length; j++) {
-	            if (myself.gameBoard[i][j].hasBalls == false) {
-	                cover += (myself.gameBoard[i][j].rightPoint.x - myself.gameBoard[i][j].leftPoint.x) * (myself.gameBoard[i][j].rightPoint.y - myself.gameBoard[i][j].leftPoint.y);
-	            }
-	        }
-	    }
-	    myself.cover = (parseFloat(cover) / (game.gameHeight * game.gameWidth)) * 100;
+		var cover = 0;
+		for (var i = 0; i < myself.gameBoard.length; i++) {
+			for (var j = 0; j < myself.gameBoard[i].length; j++) {
+				if (myself.gameBoard[i][j].hasBalls == false) {
+					cover += (myself.gameBoard[i][j].rightPoint.x - myself.gameBoard[i][j].leftPoint.x) * (myself.gameBoard[i][j].rightPoint.y - myself.gameBoard[i][j].leftPoint.y);
+				}
+			}
+		}
+		myself.cover = (parseFloat(cover) / (game.gameHeight * game.gameWidth)) * 100;
 	}
 
 	function decreaseBonus() {
-	    multiplier = multiplier - decrease;
-	    decrease = decrease - 0.000001;
-	    if (multiplier <= 1) {
-	        clearInterval(decreaseID);
-	    }
+		multiplier = multiplier - decrease;
+		decrease = decrease - 0.000001;
+		if (multiplier <= 1) {
+			clearInterval(decreaseID);
+		}
 	}
 
 	this.displayScore = function () { };
@@ -484,12 +544,12 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 	}
 
 	function rankDiff(winnerRank, loserRank) {
-	    var base = 10;
-	    var most = 200;
-	    var result = parseInt(100 * Math.pow((parseFloat(winnerRank) + 500.0) / (parseFloat(loserRank) + 0.333), 2));
-	    if (result < base) return base;
-	    if (result > most) return most;
-	    return result;
+		var base = 10;
+		var most = 200;
+		var result = parseInt(100 * Math.pow((parseFloat(winnerRank) + 500.0) / (parseFloat(loserRank) + 0.333), 2));
+		if (result < base) return base;
+		if (result > most) return most;
+		return result;
 	}
 
 	function drawNewLine(e) {
@@ -539,22 +599,22 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		}
 		var draw = true;
 		if (node && node.hasBalls) {
-		    if (paral) {  // click on the border of the same direction
-			    if (nodePos[drawDirPerp.lineDir] > 0 && (draw = node.neighbor[Node[drawDirPerp.nodeDir[0]]])) {
+			if (paral) {  // click on the border of the same direction
+				if (nodePos[drawDirPerp.lineDir] > 0 && (draw = node.neighbor[Node[drawDirPerp.nodeDir[0]]])) {
 					//tmpPos = nodePos.clone();
 					//if (perp) tmpPos[drawDir.lineDir]--;
 					if (tmpPos.x >= 0 && tmpPos.y >= 0) {
-					    var btmOrRight = myself.gameBoard[tmpPos.x][tmpPos.y];
-					    var topOrLeft = btmOrRight.neighbor[Node[drawDirPerp.nodeDir[0]]];
-					    if (topOrLeft) {
-					        for (tmpPos[drawDir.lineDir]--; tmpPos.x >= 0 && tmpPos.y >= 0; tmpPos[drawDir.lineDir]--) {
-					            btmOrRight = myself.gameBoard[tmpPos.x][tmpPos.y];
-					            topOrLeft = btmOrRight.neighbor[Node[drawDirPerp.nodeDir[0]]];
-					            if (!topOrLeft || (!topOrLeft.neighbor[Node[drawDir.nodeDir[1]]] && !btmOrRight.neighbor[Node[drawDir.nodeDir[1]]])) {
-					                break;
-					            }
-					        }
-					    }
+						var btmOrRight = myself.gameBoard[tmpPos.x][tmpPos.y];
+						var topOrLeft = btmOrRight.neighbor[Node[drawDirPerp.nodeDir[0]]];
+						if (topOrLeft) {
+							for (tmpPos[drawDir.lineDir]--; tmpPos.x >= 0 && tmpPos.y >= 0; tmpPos[drawDir.lineDir]--) {
+								btmOrRight = myself.gameBoard[tmpPos.x][tmpPos.y];
+								topOrLeft = btmOrRight.neighbor[Node[drawDirPerp.nodeDir[0]]];
+								if (!topOrLeft || (!topOrLeft.neighbor[Node[drawDir.nodeDir[1]]] && !btmOrRight.neighbor[Node[drawDir.nodeDir[1]]])) {
+									break;
+								}
+							}
+						}
 					}
 					if (tmpPos.x >= 0 && tmpPos.y >= 0) {
 						node = myself.gameBoard[tmpPos.x][tmpPos.y];
@@ -572,12 +632,12 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 			}
 
 			if (draw) {
-			    endPoint[drawDir.lineDir] = node ? node.rightPoint[drawDir.lineDir] : 1;
-			    if (clickPos[drawDir.lineDir] != endPoint[drawDir.lineDir]) {
-			        newLine = new Line(clickPos.x, clickPos.y, endPoint.x, endPoint.y, myself.lineSpeed);
-			        myself.lines.push(newLine);
-			        game.currLines.push(newLine);
-			    }
+				endPoint[drawDir.lineDir] = node ? node.rightPoint[drawDir.lineDir] : 1;
+				if (clickPos[drawDir.lineDir] != endPoint[drawDir.lineDir]) {
+					newLine = new Line(clickPos.x, clickPos.y, endPoint.x, endPoint.y, myself.lineSpeed);
+					myself.lines.push(newLine);
+					game.currLines.push(newLine);
+				}
 			}
 		}
 		
@@ -586,22 +646,22 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		tmpPos = nodePos.clone();
 		draw = true;
 		if (node.hasBalls) {
-		    if (paral) {  // click on the border of the same direction
-			    if ((draw = node.neighbor[Node[drawDirPerp.nodeDir[0]]])) {
+			if (paral) {  // click on the border of the same direction
+				if ((draw = node.neighbor[Node[drawDirPerp.nodeDir[0]]])) {
 					//tmpPos = nodePos.clone();
 					tmpPos[drawDir.lineDir]++;
 					if (tmpPos.x < myself.gameBoard.length && tmpPos.y < myself.gameBoard[tmpPos.x].length) {
-					    var btmOrRight = myself.gameBoard[tmpPos.x][tmpPos.y];
-					    var topOrLeft = btmOrRight.neighbor[Node[drawDirPerp.nodeDir[0]]];
-					    if (topOrLeft) {
-					        for (; tmpPos.x < myself.gameBoard.length && tmpPos.y < myself.gameBoard[tmpPos.x].length; tmpPos[drawDir.lineDir]++) {
-					            var btmOrRight = myself.gameBoard[tmpPos.x][tmpPos.y];
-					            var topOrLeft = btmOrRight.neighbor[Node[drawDirPerp.nodeDir[0]]];
-					            if (!topOrLeft || (!topOrLeft.neighbor[Node[drawDir.nodeDir[0]]] && !btmOrRight.neighbor[Node[drawDir.nodeDir[0]]])) {
-					                break;
-					            }
-					        }
-					    }
+						var btmOrRight = myself.gameBoard[tmpPos.x][tmpPos.y];
+						var topOrLeft = btmOrRight.neighbor[Node[drawDirPerp.nodeDir[0]]];
+						if (topOrLeft) {
+							for (; tmpPos.x < myself.gameBoard.length && tmpPos.y < myself.gameBoard[tmpPos.x].length; tmpPos[drawDir.lineDir]++) {
+								var btmOrRight = myself.gameBoard[tmpPos.x][tmpPos.y];
+								var topOrLeft = btmOrRight.neighbor[Node[drawDirPerp.nodeDir[0]]];
+								if (!topOrLeft || (!topOrLeft.neighbor[Node[drawDir.nodeDir[0]]] && !btmOrRight.neighbor[Node[drawDir.nodeDir[0]]])) {
+									break;
+								}
+							}
+						}
 					}
 					if (tmpPos.x < myself.gameBoard.length && tmpPos.y < myself.gameBoard[tmpPos.x].length) {
 						node = myself.gameBoard[tmpPos.x][tmpPos.y];
@@ -618,14 +678,14 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 				}
 			}
 
-		    if (draw) {
-			    var dimension = new Point(myself.gameWidth - 1, myself.gameHeight - 1);
-			    endPoint[drawDir.lineDir] = node ? node.leftPoint[drawDir.lineDir] : dimension[drawDir.lineDir];
-			    if (clickPos[drawDir.lineDir] != endPoint[drawDir.lineDir]) {
-			        newLine = new Line(clickPos.x, clickPos.y, endPoint.x, endPoint.y, myself.lineSpeed);
-			        myself.lines.push(newLine);
-			        game.currLines.push(newLine);
-			    }
+			if (draw) {
+				var dimension = new Point(myself.gameWidth - 1, myself.gameHeight - 1);
+				endPoint[drawDir.lineDir] = node ? node.leftPoint[drawDir.lineDir] : dimension[drawDir.lineDir];
+				if (clickPos[drawDir.lineDir] != endPoint[drawDir.lineDir]) {
+					newLine = new Line(clickPos.x, clickPos.y, endPoint.x, endPoint.y, myself.lineSpeed);
+					myself.lines.push(newLine);
+					game.currLines.push(newLine);
+				}
 			}
 		}
 	}
@@ -651,27 +711,27 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		ctx.clearRect(0, 0, myself.gameWidth, myself.gameHeight);
 		ctx.lineWidth = myself.lineWidth;
 
-	    // lines
+		// lines
 		ctx.strokeStyle = "black";
 		ctx.beginPath();
 		for (i = 0; i < myself.lines.length; i++) {
-		    var line = myself.lines[i];
-		    if (line.finished) {
-		        ctx.moveTo(line.startPoint.x, line.startPoint.y);
-		        ctx.lineTo(line.drawPoint.x, line.drawPoint.y);
-		    }
+			var line = myself.lines[i];
+			if (line.finished) {
+				ctx.moveTo(line.startPoint.x, line.startPoint.y);
+				ctx.lineTo(line.drawPoint.x, line.drawPoint.y);
+			}
 		}
 		ctx.stroke();
 
-	    // lines
+		// lines
 		ctx.strokeStyle = "blue";
 		ctx.beginPath();
 		for (i = 0; i < myself.lines.length; i++) {
-		    var line = myself.lines[i];
-		    if (!line.finished) {
-		        ctx.moveTo(line.startPoint.x, line.startPoint.y);
-		        ctx.lineTo(line.drawPoint.x, line.drawPoint.y);
-		    }
+			var line = myself.lines[i];
+			if (!line.finished) {
+				ctx.moveTo(line.startPoint.x, line.startPoint.y);
+				ctx.lineTo(line.drawPoint.x, line.drawPoint.y);
+			}
 		}
 		ctx.stroke();
 
@@ -727,48 +787,88 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		}
 		ctx.fill();
 	}
+
+	this.nextLevel = function () {
+		var win = document.createElement("img");
+		var body = document.getElementById("body");
+		win.src = "pass.png";
+		win.height = 100;
+		win.width = 200;
+		body.appendChild(win);
+		setTimeout(function () {
+			window.clearInterval(updateID);
+			window.clearInterval(renderID);
+			if (decreaseID != null) window.clearInterval(decreaseID);
+		}, 1500.0 / game.fps);
+
+		setTimeout(function () {
+			body.removeChild(win);
+
+
+			myself.gameBoard = [[]];
+			myself.balls = [];
+			myself.ballNumber += 1;
+			myself.ballSpeed += 10;
+			myself.lines = [];
+			myself.lineSpeed += 10;
+			myself.currLines = [];
+			myself.gravity = [];
+			myself.cover = 0;
+			myself.score = 0;
+			multiplier = 4.0;
+			decrease = 0.0025;
+			initialEnergy = bar.energy;
+			updateID = null;
+			renderID = null;
+			decreaseID = null;
+			bar.pauseUpdate();
+			game.begin();
+			myself.displayScore();
+		}, 5000);
+	}
 }
 
 function init() {
 	var gameCanvasDiv = document.getElementById("gameCanvas");
-	game = new Game(gameCanvasDiv, 700, 600, 3, 300, 4, 200, 2, 60);
+	game = new Game(gameCanvasDiv, 700, 600, 1, 100, 4, 200, 2, 60);
 	game.begin();
 	var scoreDiv;
 	scoreDiv = document.getElementById("score");
 	scoreDiv.innerHTML = "Score:" + game.score + "<br>Cleared£º0%";
 	game.displayScore = function () {
-	    if (game.cover >= 75.0) {
-	        alert("You Win!!!");
-	    }
-	    scoreDiv.innerHTML = "Score:" + game.score.toFixed(3) + "<br>Cleared£º" + game.cover.toFixed(2) + "%";
+		if (game.cover >= 75.0) {
+			//alert("You Win!!!");
+			game.nextLevel();
+		}
+		scoreDiv.innerHTML = "Score:" + game.score.toFixed(3) + "<br>Cleared£º" + game.cover.toFixed(2) + "%";
 	};
 	$(function () {
-	    $(".meter > span").each(function () {
-	        $(this)
-                .data("origWidth", $(this).width())
-                .width(0)
-                .animate({
-                    width: $(this).data("origWidth")
-                }, 1200);
-	    });
+		$(".meter > span").each(function () {
+			$(this)
+				.data("origWidth", $(this).width())
+				.width(0)
+				.animate({
+					width: $(this).data("origWidth")
+				}, 1200);
+		});
 	});
 }
 
 function invokeItem(event) {
-    switch (event.keyCode) {
-        case 49: hole();
-            break;
-        case 50: curve();
-            break;
-        case 51: shake();
-            break;
-        case 52: bigger(2);
-            break;
-        case 53: split();
-            break;
-        case 54: accelerate(2);
-            break;
-    }
+	switch (event.keyCode) {
+		case 49: hole();
+			break;
+		case 50: curve();
+			break;
+		case 51: shake();
+			break;
+		case 52: bigger(2);
+			break;
+		case 53: split();
+			break;
+		case 54: accelerate(2);
+			break;
+	}
 }
 window.addEventListener("load", init, false);
 window.addEventListener("keypress", invokeItem, false);
