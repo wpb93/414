@@ -2,13 +2,14 @@
 <html>
 	<head>
 		<title>Divide</title>
-		<link type="text/css" rel="game.css" />
+		<link rel="stylesheet" type="text/css" href="game.css" />
 		<link rel="stylesheet" type="text/css" href="progressbar.css">
+		<link rel="stylesheet" type="text/css" href="item.css">
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.0/jquery.min.js"></script>
+		<script type="text/javascript" src="bar.js"></script>
 		<script type="text/javascript" src="game.js"></script>
 		<script type="text/javascript" src="item.js"></script>
         <script type="text/javascript" src="score.js"></script>
-        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.0/jquery.min.js"></script>
-        <script type="text/javascript" src="bar.js"></script>
 	</head>
 	<body>
         <div id="score"></div>
@@ -16,17 +17,38 @@
     		<canvas class="game"></canvas>
     		<canvas class="game"></canvas>
 		</div>
-		<div class="meter" style="width: 200px">
+		<div class="meter" id="outer" style="width: 500px">
 			<span id="bar" style="width: 0%"></span>
 			<p id="percent"></p>
 		</div>
         <div id="buttonContainer">
-		    <button onclick="accelerate(2)">accelerate</button>
-		    <button onclick="bigger(2)">bigger</button>
-		    <button onclick="split()">split</button>
-		    <button onclick="curve()">curve</button>
-            <button onclick="hole()">hole</button>
-		    <button onclick="shake()">shake</button>
+        	<table style="padding: 10px; position: absolute; width: 400px; top: 20px; left: 800px; border: 2px solid;">
+                <tr>
+        			<td style="width: 200px;"><img id="item1" class="item_gray" src="image/hole.jpg" onclick="hole()"></td>
+        			<td style="width: 200px;"><p>hole</p><p>Energy Need: 80</p></td>
+        		</tr>
+        		<tr>
+        			<td><img id="item2" class="item_gray" src="image/curve.jpg" onclick="curve()"></td>
+        			<td><p>curve</p><p>Energy Need: 150</p></td>
+        		</tr>
+        		
+                <tr>
+        			<td><img id="item3" class="item_gray" src="image/shake.jpg" onclick="shake()"></td>
+        			<td><p>shake</p><p>Energy Need: 150</p></td>
+        		</tr>
+                <tr>
+        			<td><img id="item4" class="item_gray" src="image/big.jpg" onclick="bigger(2)"></td>
+        			<td><p>Larger</p><p>Energy Need: 300</p></td>
+        		</tr>
+        		<tr>
+        			<td><img id="item5" class="item_gray" src="image/split.jpg" onclick="split()"></td>
+        			<td><p>Split</p><p>Energy Need: 350</p></td>
+        		</tr>
+        		<tr>	
+        			<td><img id="item6" class="item_gray" src="image/accelerate.jpg" onclick="accelerate(2)"></td>
+        			<td><p>Accelerate</p><p>Energy Need: 350</p></td>
+        		</tr>
+        	</table>
         </div>
         
 	</body>

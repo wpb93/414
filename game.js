@@ -164,6 +164,84 @@ function Node(leftPoint, rightPoint) {
 
 }
 
+////////////////////////
+function Bar(maxEnergy, energyPSecond, width, multipler) {
+    this.maxEnergy = 1000;
+    this.lastEnergy = 0;
+    this.energy = 0;
+    this.multipler = multipler;
+    this.eps = energyPSecond;
+    this.widht = width;
+    this.outer = document.getElementById("outer");
+    this.bar = document.getElementById("bar");
+    this.percent = document.getElementById("percent");
+    var myself = this;
+
+    var begin = function () {
+        myself.outer.style.width = myself.widht + "px";
+        setInterval(function () {
+            myself.energy += myself.eps;
+            myself.updateBar();
+        }, 1000);
+
+        //setInterval(updateBar, 1000);
+    }();
+
+    this.decrease = function (decEnergy) {
+        myself.energy -= decEnergy;
+    };
+
+    this.updateCover = function () {
+        var addEnergy = game.cover * myself.multipler - myself.lastEnergy;
+        if (addEnergy > 0) {
+            myself.energy += addEnergy;
+        }
+        myself.lastEnergy = game.cover * myself.multipler;
+    };
+
+    this.updateBar = function () {
+        if (myself.energy >= myself.maxEnergy) {
+            myself.energy = myself.maxEnergy;
+        }
+        myself.energy = parseInt(myself.energy);
+        var width = 100 * myself.energy / myself.maxEnergy;
+        myself.percent.innerHTML = myself.energy + "/" + myself.maxEnergy;
+        myself.bar.style.width = width + "%";
+        if (myself.energy < 80) {
+            item1.style.opacity = "0.4";
+            item2.style.opacity = "0.4";
+            item3.style.opacity = "0.4";
+            item4.style.opacity = "0.4";
+            item5.style.opacity = "0.4";
+            item6.style.opacity = "0.4";
+        }
+        if (myself.energy >= 80) {
+            item1.style.opacity = "1";
+            item2.style.opacity = "0.4";
+            item3.style.opacity = "0.4";
+            item4.style.opacity = "0.4";
+            item5.style.opacity = "0.4";
+            item6.style.opacity = "0.4";
+        }
+        if (myself.energy >= 150) {
+            item2.style.opacity = "1";
+            item3.style.opacity = "1";
+            item4.style.opacity = "0.4";
+            item5.style.opacity = "0.4";
+            item6.style.opacity = "0.4";
+        }
+        if (myself.energy >= 300) {
+            item4.style.opacity = "1";
+            item5.style.opacity = "0.4";
+            item6.style.opacity = "0.4";
+        }
+        if (myself.energy >= 350) {
+            item5.style.opacity = "1";
+            item6.style.opacity = "1";
+        }
+    }
+}
+
 function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineSpeed, lineWidth, fps) {
 	this.canvasDiv = canvasDiv;
 	this.canvas = canvasDiv.getElementsByClassName('game');
@@ -184,6 +262,7 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 	this.gravity = [];
 	this.cover = 0;
 	this.score = 0;
+	var bar;
 	var myself = this;
 	var multiplier = 4.0;
 	var decrease = 0.0025;
@@ -196,6 +275,8 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		this.canvas[i].setAttribute('height', height);
 	}
 	this.begin = function () {
+	    //new bar
+	    bar = new Bar(1000, 50, 1000, 4);
 		//new balls
 		myself.gameBoard = [[new Node(new Point(1, 1), new Point(myself.gameWidth - 1, myself.gameHeight - 1))]];
 		for (var i = 0; i < ballNumber; i++) {
@@ -334,6 +415,21 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		for (i = 0; i < myself.balls.length; i++) {
 		    markHasBalls(getNode(myself.balls[i].position));
 		}
+		var oldCover = myself.cover;
+		updateCover();
+		myself.score += (parseFloat(myself.cover - oldCover) * multiplier);
+		myself.displayScore();
+	    ///////////////////////
+		bar.updateCover();
+		bar.updateBar();
+	};
+
+	this.getEnergy = function () {
+	    return bar.energy;
+	};
+
+	this.decreaseEnergy = function (cost) {
+	    bar.decrease(cost);
 	};
 
 	function getNode(point) {
@@ -359,10 +455,6 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 	function markHasBalls(nodePos) {
 		if (!nodePos) return;
 		dfsNodeTable(myself.gameBoard[nodePos.x][nodePos.y]);
-		var oldCover = myself.cover;
-		updateCover();
-		myself.score += (parseFloat(myself.cover - oldCover) * multiplier);
-		myself.displayScore();
 	}
 
 	function updateCover() {
@@ -639,8 +731,44 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 
 function init() {
 	var gameCanvasDiv = document.getElementById("gameCanvas");
-	game = new Game(gameCanvasDiv, 700, 600, 5, 400, 4, 200, 2, 60);
+	game = new Game(gameCanvasDiv, 700, 600, 3, 300, 4, 200, 2, 60);
 	game.begin();
+	var scoreDiv;
+	scoreDiv = document.getElementById("score");
+	scoreDiv.innerHTML = "Score:" + game.score + "<br>Cleared£º0%";
+	game.displayScore = function () {
+	    if (game.cover >= 75.0) {
+	        alert("You Win!!!");
+	    }
+	    scoreDiv.innerHTML = "Score:" + game.score.toFixed(3) + "<br>Cleared£º" + game.cover.toFixed(2) + "%";
+	};
+	$(function () {
+	    $(".meter > span").each(function () {
+	        $(this)
+                .data("origWidth", $(this).width())
+                .width(0)
+                .animate({
+                    width: $(this).data("origWidth")
+                }, 1200);
+	    });
+	});
 }
 
+function invokeItem(event) {
+    switch (event.keyCode) {
+        case 49: hole();
+            break;
+        case 50: curve();
+            break;
+        case 51: shake();
+            break;
+        case 52: bigger(2);
+            break;
+        case 53: split();
+            break;
+        case 54: accelerate(2);
+            break;
+    }
+}
 window.addEventListener("load", init, false);
+window.addEventListener("keypress", invokeItem, false);
