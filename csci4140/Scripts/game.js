@@ -791,7 +791,7 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 	this.nextLevel = function () {
 		var win = document.createElement("img");
 		var body = document.getElementById("body");
-		win.src = "pass.png";
+		win.src = "../Images/pass.png";
 		win.style.position = "absolute";
 		win.style.top = "0px";
 		body.appendChild(win);
