@@ -792,14 +792,14 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		var win = document.createElement("img");
 		var body = document.getElementById("body");
 		win.src = "pass.png";
-		win.height = 100;
-		win.width = 200;
+		win.style.position = "absolute";
+		win.style.top = "0px";
 		body.appendChild(win);
 		setTimeout(function () {
 			window.clearInterval(updateID);
 			window.clearInterval(renderID);
 			if (decreaseID != null) window.clearInterval(decreaseID);
-		}, 1500.0 / game.fps);
+		}, 3000.0 / game.fps);
 
 		setTimeout(function () {
 			body.removeChild(win);
@@ -814,7 +814,7 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 			myself.currLines = [];
 			myself.gravity = [];
 			myself.cover = 0;
-			myself.score = 0;
+			//myself.score = 0;
 			multiplier = 4.0;
 			decrease = 0.0025;
 			initialEnergy = bar.energy;
@@ -824,7 +824,7 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 			bar.pauseUpdate();
 			game.begin();
 			myself.displayScore();
-		}, 5000);
+		}, 2000);
 	}
 }
 
