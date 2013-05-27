@@ -4,6 +4,7 @@ var __extends = this.__extends || function (d, b) {
     d.prototype = new __();
 };
 var uid;
+var game;
 var ParticleDemoMasterAddress = this["AppInfo"] && this["AppInfo"]["MasterAddress"] ? this["AppInfo"]["MasterAddress"] : "localhost:9090";
 var ParticleDemoAppId = this["AppInfo"] && this["AppInfo"]["AppId"] ? this["AppInfo"]["AppId"] : "<no-app-id>";
 var ParticleDemoAppVersion = this["AppInfo"] && this["AppInfo"]["AppVersion"] ? this["AppInfo"]["AppVersion"] : "1.0";
@@ -25,6 +26,9 @@ var DemoLoadBalancing = (function (_super) {
         this.setLogLevel(Exitgames.Common.Logger.Level.DEBUG);
         this.myActor().setName(uid);
         this.myActor().setCustomProperty("color", this.USERCOLORS[0]);
+        this.setOpReady(false);
+        this.startGameHandle = null;
+        this.firstTime = true;
     }
     DemoLoadBalancing.prototype.start = function () {
         this.setupUI();
@@ -40,7 +44,11 @@ var DemoLoadBalancing = (function (_super) {
                 var sender = content.senderName;
                 this.speak(sender + ": " + mess, this.myRoomActors()[actorNr].getCustomProperty("color"));
                 break;
+            case 2:
+                console.log("asdasdads: " + content.senderName);
+                break;
             default:
+                console.log("Unknown Message: " + JSON.stringify(content));
         }
         this.logger.debug("onEvent", code, "content:", content, "actor:", actorNr);
     };
@@ -49,6 +57,13 @@ var DemoLoadBalancing = (function (_super) {
         var stateText = document.getElementById("statetxt");
         stateText.textContent = LBC.StateToName(state);
         this.updateRoomButtons();
+        if(this.firstTime && state == Photon.LoadBalancing.LoadBalancingClient.State.JoinedLobby) {
+            this.createRoom(null, true, false, 1);
+        }
+    };
+    DemoLoadBalancing.prototype.onActorPropertiesChange = function (actor) {
+        this.setOpReady(actor.getCustomProperty("ready"));
+        this.startGame();
     };
     DemoLoadBalancing.prototype.onRoomListUpdate = function (rooms, roomsUpdated, roomsAdded, roomsRemoved) {
         this.logger.info("Demo: onRoomListUpdate", rooms, roomsUpdated, roomsAdded, roomsRemoved);
@@ -57,15 +72,29 @@ var DemoLoadBalancing = (function (_super) {
         this.updateRoomButtons();
     };
     DemoLoadBalancing.prototype.onRoomList = function (rooms) {
-        var menu = document.getElementById("gamelist");
-        while(menu.firstChild) {
-            menu.removeChild(menu.firstChild);
+        if(this.firstTime && this.isJoinedToRoom()) {
+            console.log("Multiple login check: " + this.myRoom().getCustomPropertyOrElse("uid", null));
+            this.firstTime = false;
+            this.leaveRoom();
+            return;
         }
+        var menu = document.getElementById("gamelist");
+        menu.innerHTML = "";
         var roomsPerRow = 4;
         var k = roomsPerRow;
         var row;
+        var roomcnt = rooms.length;
         for(var i = 0; i < rooms.length; ++i) {
             var r = rooms[i];
+            if(!r.isOpen) {
+                if(r.getCustomPropertyOrElse("uid", null) == uid) {
+                    console.log("Multiple login detected: " + this.myRoom().getCustomPropertyOrElse("uid", null));
+                    this.quit();
+                    return;
+                }
+                roomcnt--;
+                continue;
+            }
             if(k >= roomsPerRow) {
                 row = document.createElement("tr");
                 k = 0;
@@ -98,11 +127,16 @@ var DemoLoadBalancing = (function (_super) {
             menu.appendChild(row);
         }
         var cnt = document.getElementById("roomcnt");
-        cnt.innerText = rooms.length.toString();
+        cnt.innerText = roomcnt.toString();
         this.output("Demo: Rooms total: " + rooms.length);
         this.updateRoomButtons();
     };
     DemoLoadBalancing.prototype.onJoinRoom = function () {
+        if(!this.myRoom().isOpen) {
+            this.myRoom().setCustomProperty("uid", uid);
+            return;
+        }
+        this.setMeReady(false);
         var dialog = document.getElementById("theDialogue");
         dialog.innerHTML = "";
         var input = document.getElementById("input");
@@ -121,12 +155,22 @@ var DemoLoadBalancing = (function (_super) {
             }
         }
         var title = document.getElementsByTagName("h1")[0];
-        title.innerText = opponent ? ("Your opponent is " + opponent.name) : "Waiting for another player...";
+        if(!opponent) {
+            this.setOpReady(false);
+            title.innerText = "Waiting for another player...";
+        } else {
+            this.setOpReady(opponent.getCustomProperty("ready"));
+            title.innerText = "Your opponent is " + opponent.name;
+            var opStat = document.getElementById("opStatus");
+            opStat.style.display = "block";
+        }
     };
     DemoLoadBalancing.prototype.onActorJoin = function (actor) {
         if(this.isJoinedToRoom()) {
             var title = document.getElementsByTagName("h1")[0];
             title.innerText = "Your opponent is " + actor.name;
+            var opStat = document.getElementById("opStatus");
+            opStat.style.display = "block";
         }
         this.speak(actor.name + " joined");
     };
@@ -134,6 +178,9 @@ var DemoLoadBalancing = (function (_super) {
         if(this.isJoinedToRoom()) {
             var title = document.getElementsByTagName("h1")[0];
             title.innerText = "Waiting for another player...";
+            var opStat = document.getElementById("opStatus");
+            opStat.style.display = "none";
+            this.setOpReady(false);
         }
         this.speak(actor.name + " left");
     };
@@ -148,10 +195,28 @@ var DemoLoadBalancing = (function (_super) {
             this.output("error: " + err.message);
         }
     };
+    DemoLoadBalancing.prototype.openRooms = function () {
+        var rooms = this.availableRooms();
+        var roomcnt = rooms.length;
+        for(var i = 0; i < rooms.length; i++) {
+            if(!rooms[i].isOpen) {
+                roomcnt--;
+            }
+        }
+        return roomcnt;
+    };
+    DemoLoadBalancing.prototype.quit = function () {
+        this.disconnect();
+        var lobby = document.getElementById("lobby");
+        lobby.style.display = "none";
+        var chat = document.getElementById("chat");
+        chat.style.display = "none";
+        var title = document.getElementsByTagName("h1")[0];
+        title.innerText = "Multiple login detected. You are disconnected.";
+    };
     DemoLoadBalancing.prototype.setupUI = function () {
         var _this = this;
         this.logger.info("Setting up UI.");
-        var userlist = document.getElementById("userlist");
         var input = document.getElementById("input");
         input.value = '';
         input.focus();
@@ -212,6 +277,13 @@ var DemoLoadBalancing = (function (_super) {
             _this.myActor().setCustomProperty("color", color);
             _this.sendMessage("... changed his / her color!");
         };
+        btn = document.getElementById("ready");
+        btn.onclick = function (ev) {
+            var me = _this.myActor();
+            var meReady = !me.getCustomProperty("ready");
+            _this.setMeReady(meReady);
+            _this.startGame();
+        };
         this.updateRoomButtons();
         var chat = document.getElementById("chat");
         chat.style.display = "none";
@@ -236,11 +308,49 @@ var DemoLoadBalancing = (function (_super) {
         var btn;
         btn = document.getElementById("newgamebtn");
         btn.disabled = !(this.isInLobby() && !this.isJoinedToRoom());
-        var canJoin = this.isInLobby() && !this.isJoinedToRoom() && this.availableRooms().length > 0;
+        var canJoin = this.isInLobby() && !this.isJoinedToRoom() && this.openRooms() > 0;
         btn = document.getElementById("joinrandomgamebtn");
         btn.disabled = !canJoin;
         btn = document.getElementById("leavebtn");
         btn.disabled = !(this.isJoinedToRoom());
+    };
+    DemoLoadBalancing.prototype.startGame = function () {
+        var countDown = 5;
+        var client = this;
+        var start = function () {
+            var meReady = client.myActor().getCustomProperty("ready");
+            if(meReady && client.opReady) {
+                if(countDown > 0) {
+                    client.speak("Game start count down: " + countDown);
+                    countDown--;
+                    client.startGameHandle = setTimeout(start, 1000);
+                } else {
+                    client.startGameHandle = null;
+                    client.speak("Game start!");
+                }
+            }
+        };
+        start();
+    };
+    DemoLoadBalancing.prototype.setMeReady = function (ready) {
+        this.myActor().setCustomProperty("ready", ready);
+        var btn = document.getElementById("ready");
+        btn.lastChild.textContent = ready ? "Ready" : "Not ready";
+        var img = document.getElementById("meReady");
+        img.src = "/Images/circle_" + (ready ? "green" : "yellow") + ".png";
+        if(!ready && this.startGameHandle != null) {
+            clearTimeout(this.startGameHandle);
+        }
+    };
+    DemoLoadBalancing.prototype.setOpReady = function (ready) {
+        this.opReady = ready;
+        var img = document.getElementById("opReady");
+        img.src = "/Images/circle_" + (ready ? "green" : "yellow") + ".png";
+        if(!ready && this.startGameHandle != null) {
+            clearTimeout(this.startGameHandle);
+        }
+        var opStat = document.getElementById("opStatus");
+        (opStat.getElementsByTagName("span")[0]).innerText = ready ? "Your opponent is ready!" : "Your opponent is not ready";
     };
     return DemoLoadBalancing;
 })(Photon.LoadBalancing.LoadBalancingClient);
@@ -249,3 +359,4 @@ window.onload = function () {
     demo = new DemoLoadBalancing();
     demo.start();
 };
+//@ sourceMappingURL=app.js.map
