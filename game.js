@@ -795,6 +795,7 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		win.style.position = "absolute";
 		win.style.top = "0px";
 		body.appendChild(win);
+		passOne();
 		setTimeout(function () {
 			window.clearInterval(updateID);
 			window.clearInterval(renderID);
@@ -824,10 +825,22 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 			bar.pauseUpdate();
 			game.begin();
 			myself.displayScore();
-		}, 2000);
+		}, 3000);
 	}
 }
 
+function passOne() {
+    var passMedia = document.createElement("audio");
+    passMedia.style.display = "none";
+    passMedia.src = "smb_stage_clear.mp3";
+    passMedia.controls = true;
+    passMedia.autoplay = true;
+    passMedia.play();
+    document.body.appendChild(passMedia);
+    passMedia.addEventListener("ended", function () {
+        document.body.removeChild(passMedia);
+    }, false);
+}
 function init() {
 	var gameCanvasDiv = document.getElementById("gameCanvas");
 	game = new Game(gameCanvasDiv, 700, 600, 1, 100, 4, 200, 2, 60);
