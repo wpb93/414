@@ -334,6 +334,10 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
         for (i = 0; i < myself.balls.length; i++) {
             markHasBalls(getNode(myself.balls[i].position));
         }
+        var oldCover = myself.cover;
+        updateCover();
+        myself.score += (parseFloat(myself.cover - oldCover) * multiplier);
+        myself.displayScore();
     };
 
     function getNode(point) {
@@ -359,10 +363,6 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
     function markHasBalls(nodePos) {
         if (!nodePos) return;
         dfsNodeTable(myself.gameBoard[nodePos.x][nodePos.y]);
-        var oldCover = myself.cover;
-        updateCover();
-        myself.score += (parseFloat(myself.cover - oldCover) * multiplier);
-        myself.displayScore();
     }
 
     function updateCover() {
@@ -645,7 +645,8 @@ function init() {
     scoreDiv = document.getElementById("score");
     scoreDiv.innerHTML = "score: " + game.score + "<br />" + "Area£º0%";
     game.displayScore = function () {
-        if (game.cover >= 75) {
+        if (parseInt(game.cover) >= 70) {
+            
             var winDiv = document.getElementById("win");
             winDiv.style.visibility = "visible";
             // End game
