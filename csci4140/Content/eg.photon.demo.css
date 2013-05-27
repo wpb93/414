@@ -125,3 +125,15 @@ td.full:hover {
     font: 2em "Noto Sans",sans-serif;
 
 }
+
+#opStatus {
+    font: 2em "Noto Sans",sans-serif;
+    display: none;
+}
+
+#ready {
+    width: 6em;
+    -ms-word-break: keep-all;
+    word-break: keep-all;
+    white-space: nowrap;
+}
