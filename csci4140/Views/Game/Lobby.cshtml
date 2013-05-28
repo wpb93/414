@@ -23,52 +23,62 @@
 			<button id="ready"><img id="meReady" width="75" height="75" src="/Images/circle_yellow.png" /><br />Not ready</button>
 			</div>
 
-			
-		<div id="gameDiv" class="game">
-			<div id="score"></div>
-			<div id="gameCanvas">
-				<canvas class="game"></canvas>
-				<canvas class="game"></canvas>
-			</div>
-			<div id="outer" class="meter">
-				<span id="bar"></span>
-				<p id="percent"></p>
-			</div>
-			<div id="buttonContainer">
-				<table id="items">
-					<tr>
-						<td><img id="item1" class="item_gray" src="/Images/hole.jpg" onclick="clickItem(1)"></td>
-						<td><p>hole</p><p>Energy Need: 80</p></td>
-					</tr>
-					<tr>
-						<td><img id="item2" class="item_gray" src="/Images/curve.jpg" onclick="clickItem(2)"></td>
-						<td><p>curve</p><p>Energy Need: 150</p></td>
-					</tr>
-					
-					<tr>
-						<td><img id="item3" class="item_gray" src="/Images/shake.jpg" onclick="clickItem(3)"></td>
-						<td><p>shake</p><p>Energy Need: 150</p></td>
-					</tr>
-					<tr>
-						<td><img id="item4" class="item_gray" src="/Images/big.jpg" onclick="clickItem(4)"></td>
-						<td><p>Larger</p><p>Energy Need: 300</p></td>
-					</tr>
-					<tr>
-						<td><img id="item5" class="item_gray" src="/Images/split.jpg" onclick="clickItem(5)"></td>
-						<td><p>Split</p><p>Energy Need: 350</p></td>
-					</tr>
-					<tr>	
-						<td><img id="item6" class="item_gray" src="/Images/accelerate.jpg" onclick="clickItem(6)"></td>
-						<td><p>Accelerate</p><p>Energy Need: 350</p></td>
-					</tr>
-				</table>
-			</div>
-		</div>
+			<table>
+                <tr>
+                    <td>
+                        <div id="gameDiv" class="game">
+			                <div id="score"></div>
+			                <div id="gameCanvas">
+				                <canvas class="game"></canvas>
+				                <canvas class="game"></canvas>
+			                </div>
+			                <div id="outer" class="meter">
+				                <span id="bar"></span>
+				                <p id="percent"></p>
+			                </div>
+		                </div>
+                    </td>
+                    <td><div id="buttonContainer">
+				        <table id="items">
+					        <tr>
+				        		<td><img id="item1" class="item_gray" src="/Images/hole.jpg" onclick="clickItem(1)"></td>
+				        		<td><p>hole</p><p>Energy Need: 80</p></td>
+			        		</tr>
+				        	<tr>
+				        		<td><img id="item2" class="item_gray" src="/Images/curve.jpg" onclick="clickItem(2)"></td>
+			        			<td><p>curve</p><p>Energy Need: 150</p></td>
+			        		</tr>
+			        		
+			        		<tr>
+			   	        		<td><img id="item3" class="item_gray" src="/Images/shake.jpg" onclick="clickItem(3)"></td>
+			           			<td><p>shake</p><p>Energy Need: 150</p></td>
+			        		</tr>
+				        	<tr>
+					        	<td><img id="item4" class="item_gray" src="/Images/big.jpg" onclick="clickItem(4)"></td>
+					        	<td><p>Larger</p><p>Energy Need: 300</p></td>
+					        </tr>
+					        <tr>
+						        <td><img id="item5" class="item_gray" src="/Images/split.jpg" onclick="clickItem(5)"></td>
+						        <td><p>Split</p><p>Energy Need: 350</p></td>
+					        </tr>
+					        <tr>	
+						        <td><img id="item6" class="item_gray" src="/Images/accelerate.jpg" onclick="clickItem(6)"></td>
+						        <td><p>Accelerate</p><p>Energy Need: 350</p></td>
+					        </tr>
+				        </table>
+			        </div>
+                    <div id="liveGame" class="game">
+				        <canvas class="game"></canvas>
+				        <canvas class="game"></canvas>
+			        </div>
+                    </td>
+                </tr>
+
+			</table>
+
 		
-			<div id="liveGame" class="game">
-				<canvas class="game"></canvas>
-				<canvas class="game"></canvas>
-			</div>
+		
+			
 
 
 			<div id="theDialogue"></div>
@@ -78,5 +88,6 @@
 			</form>
 			<button id="colorbtn">Change Color</button>
 			<button id="leavebtn">Leave</button>
+            
 		</div>
 	</div>
