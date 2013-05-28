@@ -272,7 +272,6 @@
     <Content Include="Scripts\cloud-app-info.js" />
     <Content Include="Scripts\game.js" />
     <Content Include="Scripts\gameSample.js" />
-    <Content Include="Scripts\item.js" />
     <Content Include="Scripts\jquery-1.8.2.js" />
     <Content Include="Scripts\jquery-1.8.2.min.js" />
     <None Include="Scripts\jquery.validate-vsdoc.js" />
@@ -363,7 +362,7 @@
         <WebProjectProperties>
           <UseIIS>True</UseIIS>
           <AutoAssignPort>True</AutoAssignPort>
-          <DevelopmentServerPort>0</DevelopmentServerPort>
+          <DevelopmentServerPort>43751</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>
           <IISUrl>http://localhost:3905/</IISUrl>
           <NTLMAuthentication>False</NTLMAuthentication>
