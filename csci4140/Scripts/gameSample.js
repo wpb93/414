@@ -653,7 +653,7 @@ function init() {
             //gameCanvasDiv.removeEventListener("click", drawNewLine, false);
             //gameCanvasDiv.removeEventListener("contextmenu", drawNewLine, false);
         }
-        scoreDiv.innerHTML = "score:" + game.score.toFixed(3) + "<br />" + "Area£º" + game.cover.toFixed(2) + "%";
+        scoreDiv.innerHTML = "score: " + game.score.toFixed(3) + "<br />" + "Area: " + game.cover.toFixed(2) + "%";
     };
 }
 
