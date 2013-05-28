@@ -58,11 +58,47 @@ var DemoLoadBalancing = (function (_super) {
                 game.client = this;
                 game.begin();
                 live.begin();
-                life.calTime();
                 this.sendGameState(this);
                 break;
             case 3:
-                live.updateState(JSON.parse(content.gameState));
+                if(live) {
+                    live.updateState(JSON.parse(content.gameState));
+                }
+                break;
+            case 4:
+                if(game) {
+                    switch(parseInt(content.index)) {
+                        case 0:
+                            game.hole();
+                            break;
+                        case 1:
+                            game.curve();
+                            break;
+                        case 2:
+                            game.shake();
+                            break;
+                        case 3:
+                            game.bigger(2);
+                            break;
+                        case 4:
+                            game.split();
+                            break;
+                        case 5:
+                            game.accelerate(2);
+                            break;
+                    }
+                }
+                break;
+            case 5:
+                if(game) {
+                    game.opDied();
+                }
+                break;
+            case 6:
+                if(game) {
+                    this.speak("You Win! Your score: " + game.score + ", your opponent's score: " + live.score);
+                    this.quitGame();
+                }
                 break;
             default:
                 console.log("Unknown Message: " + JSON.stringify(content));
@@ -193,10 +229,19 @@ var DemoLoadBalancing = (function (_super) {
     };
     DemoLoadBalancing.prototype.onActorLeave = function (actor) {
         if(this.isJoinedToRoom()) {
+            game.stop();
+            live.stop();
+            var gameDiv = document.getElementById("gameDiv");
+            var liveGameDiv = document.getElementById("liveGame");
+            gameDiv.style.display = "none";
+            liveGameDiv.style.display = "none";
+            var readyStat = document.getElementById("readyStatus");
+            readyStat.style.display = "block";
             var title = document.getElementsByTagName("h1")[0];
             title.innerText = "Waiting for another player...";
             var opStat = document.getElementById("opStatus");
             opStat.style.display = "none";
+            this.setMeReady(false);
             this.setOpReady(false);
         }
         this.speak(actor.name + " left");
@@ -231,6 +276,16 @@ var DemoLoadBalancing = (function (_super) {
         var title = document.getElementsByTagName("h1")[0];
         title.innerText = "Multiple login detected. You are disconnected.";
     };
+    DemoLoadBalancing.prototype.quitGame = function () {
+        var gameDiv = document.getElementById("gameDiv");
+        var liveGameDiv = document.getElementById("liveGame");
+        gameDiv.style.display = "none";
+        liveGameDiv.style.display = "none";
+        var readyStat = document.getElementById("readyStatus");
+        readyStat.style.display = "block";
+        this.setMeReady(false);
+        this.setOpReady(false);
+    };
     DemoLoadBalancing.prototype.getUpdateFunction = function (client) {
         return function () {
             client.raiseEvent(3, {
@@ -239,7 +294,10 @@ var DemoLoadBalancing = (function (_super) {
         };
     };
     DemoLoadBalancing.prototype.sendGameState = function (client) {
-        this.getUpdateFunction(this)();
+        this.getUpdateFunction(client)();
+    };
+    DemoLoadBalancing.prototype.sendDiedMessage = function (client) {
+        client.raiseEvent(6, null);
     };
     DemoLoadBalancing.prototype.setupUI = function () {
         var _this = this;
@@ -327,6 +385,9 @@ var DemoLoadBalancing = (function (_super) {
         }
         log.innerHTML = log.innerHTML + escaped + "<br>";
         log.scrollTop = log.scrollHeight;
+    };
+    DemoLoadBalancing.prototype.say = function (client, str, color) {
+        client.speak(str, color);
     };
     DemoLoadBalancing.prototype.output = function (str, color) {
         console.log(str);

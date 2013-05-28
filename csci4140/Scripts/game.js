@@ -1,5 +1,4 @@
 var game;
-var life;
 
 function between(m, a, b, inclusive, cmp) {
 	if (!cmp) {
@@ -90,7 +89,9 @@ function Ball(position_x, position_y, speed_x, speed_y, ballRadius, game) {
 					if (myself.game.currLines[0] == myself.game.lines[i]) myself.game.currLines.shift();
 					else myself.game.currLines.pop();
 					myself.game.lines.splice(i--, 1);
-					life.die();
+					if (myself.game.life) {
+						myself.game.life.die();
+					}
 				}
 			}
 		}
@@ -330,10 +331,11 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 	this.cover = 0;
 	this.score = 0;
 	this.client = null;
+	this.life = new Life(6, this);
 	var myself = this;
 	var bar;
 	var initialEnergy = 0;
-	var multiplier = 4.0;
+	var multiplier;
 	var decrease = 0.0025;
 	var useItems = new Array(6);
 	//0->hole 1->curve 2->shake 3->larger 4->split 5->accelerate
@@ -344,6 +346,8 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 	var renderID = null;
 	var decreaseID = null;
 	var sendID = null;
+	var opDead = false;
+	var meDead = false;
 	for (var i = 0; i < this.canvas.length; i++) {
 		this.canvas[i].style.display = 'none';
 		this.canvas[i].setAttribute('width', this.gameWidth);
@@ -373,6 +377,11 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 	bar = new Bar(initialEnergy, 1000, 1, 1000, 4);
 
 	this.begin = function () {
+		multiplier = 4.0;
+		updateID = null;
+		renderID = null;
+		decreaseID = null;
+		sendID = null;
 
 		//new balls
 		myself.gameBoard = [[new Node(new Point(1, 1), new Point(myself.gameWidth - 1, myself.gameHeight - 1))]];
@@ -415,8 +424,12 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		renderID = setInterval(render, 1000.0 / myself.fps);
 		decreaseID = setInterval(decreaseBonus, 30);
 		if (myself.client) {
+			console.log("11111111111111111111111");
 			sendID = setInterval(myself.client.getUpdateFunction(myself.client), 1000);
 		}
+
+		bar.wakeUpUpdate();
+		myself.life.calTime();
 	};
 
 	this.addNode = function (line) {
@@ -517,7 +530,7 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		}
 		var oldCover = myself.cover;
 		updateCover();
-		if (life.mylife > 0) {
+		if (myself.life.mylife > 0) {
 			myself.score += (parseFloat(myself.cover - oldCover) * multiplier);
 		}
 		myself.displayScore();
@@ -527,10 +540,10 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 	};
 
 	function checkWin() {
-		if (game.cover >= 75.0 && life.mylife > 0) {
+		if (myself.cover >= 75.0 && myself.life.mylife > 0) {
 			//alert("You Win!!!");
-			game.nextLevel();
-			life.bear();
+			myself.nextLevel();
+			myself.life.bear();
 			passOne();
 		}
 	}
@@ -593,15 +606,13 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		e.preventDefault();
 	}
 
-	function hole() {
-		if (!ifEnough(80) || useItems[0]) return;
-		useItems[0] = true;
-		myself.decreaseEnergy(80);
+	this.hole = function () {
+		//if (this != myself.client) return;
 		var container = document.createElement("div");
 		var canvasDiv = document.getElementById('gameCanvas');
 		var image = document.createElement("img");
-		container.style.left = canvasDiv.clientLeft + parseInt(Math.random() * (game.gameWidth - 200)) + "px";
-		container.style.top = canvasDiv.clientTop + parseInt(Math.random() * (game.gameHeight - 240)) + "px";
+		container.style.left = canvasDiv.clientLeft + parseInt(Math.random() * (myself.gameWidth - 200)) + "px";
+		container.style.top = canvasDiv.clientTop + parseInt(Math.random() * (myself.gameHeight - 240)) + "px";
 		container.style.width = "200px";
 		container.style.height = "240px";
 		container.style.position = "absolute";
@@ -619,21 +630,31 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		}, 10000);
 	}
 
-	function curve() {
-		if (!ifEnough(150) || useItems[1]) return;
-		useItems[1] = true;
-		myself.decreaseEnergy(150);
-		game.gravity.push(new Gravity(parseInt(Math.random() * (game.gameWidth - 200) + 100), parseInt(Math.random() * (game.gameHeight - 200) + 100), 50, 50000, myself));
+	 function sendHole() {
+		if (!ifEnough(80) || useItems[0]) return;
+		myself.client.raiseEvent(4, { index: 0 });
+		useItems[0] = true;
+		myself.decreaseEnergy(80);
+	}
+
+	this.curve = function () {
+		//if (this != myself.client) return;
+		myself.gravity.push(new Gravity(parseInt(Math.random() * (myself.gameWidth - 200) + 100), parseInt(Math.random() * (myself.gameHeight - 200) + 100), 50, 50000, myself));
 		setTimeout(function () {
-			game.gravity.shift();
+			myself.gravity.shift();
 			useItems[1] = false;
 		}, 5000);
 	}
 
-	function shake() {
-		if (!ifEnough(150) || useItems[2]) return;
-		useItems[2] = true;
+	function sendCurve() {
+		if (!ifEnough(150) || useItems[1]) return;
+		myself.client.raiseEvent(4, { index: 1 });
+		useItems[1] = true;
 		myself.decreaseEnergy(150);
+	}
+
+	this.shake = function () {
+		//if (this != myself.client) return;
 		var j = 0;
 		var x = myself.canvasDiv;
 		var y = document.getElementById("holeDiv");
@@ -720,65 +741,87 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		}, 15000);
 	}
 
-	function bigger(m) {
-		if (!ifEnough(300) || useItems[3]) return;
-		useItems[3] = true;
-		myself.decreaseEnergy(300);
-		if (game.ballRadius * m > 50) return;
-		game.ballRadius *= m;
+	function sendShake() {
+		if (!ifEnough(150) || useItems[2]) return;
+		myself.client.raiseEvent(4, { index: 2 });
+		useItems[2] = true;
+		myself.decreaseEnergy(150);
+	}
+
+	this.bigger = function(m) {
+		//if (this != myself.client) return;
+		if (myself.ballRadius * m > 50) return;
+		myself.ballRadius *= m;
 		function setRadius() {
-			for (var i = 0; i < game.balls.length; i++) {
-				game.balls[i].radius = game.ballRadius;
+			for (var i = 0; i < myself.balls.length; i++) {
+				myself.balls[i].radius = myself.ballRadius;
 			}
 		}
 		setRadius();
 		setTimeout(function () {
-			game.ballRadius /= m;
+			myself.ballRadius /= m;
 			setRadius();
 			useItems[3] = false;
 		}, 5000);
 	}
 
-	function split() {
-		if (!ifEnough(350) || useItems[4]) return;
-		useItems[4] = true;
-		myself.decreaseEnergy(350);
-		var oldLen = game.balls.length;
-		game.ballNumber *= 2;
+	function sendBigger() {
+		if (!ifEnough(300) || useItems[3]) return;
+		myself.client.raiseEvent(4, { index: 3 });
+		useItems[3] = true;
+		myself.decreaseEnergy(300);
+	}
+
+	this.split = function () {
+		//if (this != myself.client) return;
+		var oldLen = myself.balls.length;
+		myself.ballNumber *= 2;
 		for (var i = 0; i < oldLen; i++) {
 			var part = Math.random() * 0.4 * Math.PI;
 			var quadrant = Math.floor(Math.random() * 4);
 			var angle = quadrant * 0.5 * Math.PI + 0.05 * Math.PI + part;
-			var speed_x = game.ballSpeed * Math.cos(angle);
-			var speed_y = game.ballSpeed * Math.sin(angle);
-			game.balls.push(new Ball(game.balls[i].position.x, game.balls[i].position.y, speed_x, speed_y, game.ballRadius, myself));
+			var speed_x = myself.ballSpeed * Math.cos(angle);
+			var speed_y = myself.ballSpeed * Math.sin(angle);
+			myself.balls.push(new Ball(myself.balls[i].position.x, myself.balls[i].position.y, speed_x, speed_y, myself.ballRadius, myself));
 		}
 		setTimeout(function () {
-			game.ballNumber /= 2;
-			game.balls.length = game.ballNumber;
+			myself.ballNumber /= 2;
+			myself.balls.length = myself.ballNumber;
 			useItems[4] = false;
 		}, 8000);
 	}
 
-	function accelerate(m) {
-		if (!ifEnough(350) || useItems[5]) return;
-		useItems[5] = true;
+	function sendSplit() {
+		if (!ifEnough(350) || useItems[4]) return;
+		myself.client.raiseEvent(4, { index: 4 });
+		useItems[4] = true;
 		myself.decreaseEnergy(350);
-		for (var i = 0; i < game.balls.length; i++) {
-			game.balls[i].speed.x *= m;
-			game.balls[i].speed.y *= m;
+	}
+
+	this.accelerate = function(m) {
+		//if (this != myself.client) return;
+		for (var i = 0; i < myself.balls.length; i++) {
+			myself.balls[i].speed.x *= m;
+			myself.balls[i].speed.y *= m;
 		}
 		setTimeout(function () {
-			for (var i = 0; i < game.balls.length; i++) {
-				game.balls[i].speed.x /= m;
-				game.balls[i].speed.y /= m;
+			for (var i = 0; i < myself.balls.length; i++) {
+				myself.balls[i].speed.x /= m;
+				myself.balls[i].speed.y /= m;
 			}
 			useItems[5] = false;
 		}, 5000);
 	}
 
+	function sendAccelerate() {
+		if (!ifEnough(350) || useItems[5]) return;
+		myself.client.raiseEvent(4, { index: 5 });
+		useItems[5] = true;
+		myself.decreaseEnergy(350);
+	}
+
 	function ifEnough(cost) {
-		if (cost <= game.getEnergy()) {
+		if (cost <= myself.getEnergy()) {
 			return true;
 		} else {
 			return false;
@@ -856,25 +899,26 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 
 	this.keyPress = function (code) {
 		switch (code) {
-			case 49: hole();
+			case 49: sendHole();
 				break;
-			case 50: curve();
+			case 50: sendCurve();
 				break;
-			case 51: shake();
+			case 51: sendShake();
 				break;
-			case 52: bigger(2);
+			case 52: sendBigger();
 				break;
-			case 53: split();
+			case 53: sendSplit();
 				break;
-			case 54: accelerate(2);
+			case 54: sendAccelerate();
 				break;
 		}
-	}
+	};
+
 	this.displayScore = function () { };
 
 	this.updateRanking = function (opposerScore, opposerRank) {
 
-	}
+	};
 
 	function rankDiff(winnerRank, loserRank) {
 		var base = 10;
@@ -1123,6 +1167,27 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		ctx.fill();
 	}
 
+	this.stop = function () {
+		if (updateID != null) {
+			clearInterval(updateID);
+			updateID = null;
+		}
+		if (renderID != null) {
+			clearInterval(renderID);
+			renderID = null;
+		}
+		if (sendID != null) {
+			clearInterval(sendID);
+			console.log("2222222222222222222222222");
+			sendID = null;
+		}
+		if (decreaseID != null) {
+			clearInterval(decreaseID);
+			decreaseID = null;
+		}
+		bar.pauseUpdate();
+	};
+
 	this.nextLevel = function () {
 		var win = document.createElement("img");
 		var body = document.getElementById("body");
@@ -1132,12 +1197,7 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		win.style.left = myself.canvasDiv.style.left;
 		myself.canvasDiv.appendChild(win);
 
-		setTimeout(function () {
-			clearInterval(updateID);
-			clearInterval(renderID);
-			if (sendID != null) clearInterval(sendID);
-			if (decreaseID != null) clearInterval(decreaseID);
-		}, 3000.0 / myself.fps);
+		setTimeout(this.stop, 3000.0 / myself.fps);
 
 		setTimeout(function () {
 			myself.canvasDiv.removeChild(win);
@@ -1159,9 +1219,44 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 			updateID = null;
 			renderID = null;
 			decreaseID = null;
+			sendID = null;
 			bar.pauseUpdate();
 			myself.begin();
 		}, 2000);
+	}
+
+	this.opDied = function () {
+		opDead = true;
+		if (myself.client) {
+			if (game.score > live.score) {
+			    myself.client.say(myself.client, "You Win! Your score: " + game.score + ", your opponent's score: " + live.score);
+			} else {
+			    myself.client.say(myself.client, "You Lose! Your score: " + game.score + ", your opponent's score: " + live.score);
+			}
+			myself.quitGame();
+		}
+	}
+
+	this.meDied = function () {
+		meDead = true;
+		if (myself.client) {
+		    myself.client.sendDiedMessage(myself.client);
+		    if (game.score > live.score) {
+		        myself.client.say(myself.client, "You Win! Your score: " + game.score + ", your opponent's score: " + live.score);
+		    } else {
+		        myself.client.say(myself.client, "You Lose! Your score: " + game.score + ", your opponent's score: " + live.score);
+		    }
+			myself.stop();
+			myself.client.quitGame();
+		}
+	}
+
+	this.win = function () {
+		console.log(live.score);
+	}
+
+	this.lose = function () {
+		console.log(live.score);
 	}
 }
 
@@ -1213,7 +1308,9 @@ function Life(initLife, game) {
 	this.timeRemain = 300000;
 	this.timeAll = 300000;
 	this.game = game;
+	this.pause = false;
 	this.calTime = function () {
+		if (myself.pause) return;
 		if (myself.timeRemain > 0) {
 			var d = new Date();
 			if (myself.startTime) {
@@ -1243,12 +1340,13 @@ function Life(initLife, game) {
 				myself.timeRemain = 0;
 				var end = document.createElement("img");
 				end.src = "/Images/end.jpg";
-				end.style.top = (parseInt(myself.game.canvasDiv.style.top) + 250) + 'px';
-				end.style.left = (parseInt(myself.game.canvasDiv.style.left) + 80) + 'px';
+				end.style.top = (myself.game.canvasDiv.style.top);
+				end.style.left = (myself.game.canvasDiv.style.left);
 				end.style.position = "absolute";
 				end.height = 120;
 				end.width = 300;
 				myself.game.canvasDiv.appendChild(end);
+				myself.game.meDied();
 			}
 		}
 	}
@@ -1444,17 +1542,7 @@ function LiveGame(canvasDiv, fps, displayHeight, displayWidth) {
 		var oldCover = myself.cover;
 		updateCover();
 		myself.displayScore();
-		checkWin();
 	};
-
-	function checkWin() {
-		if (game.cover >= 75.0 && life.mylife > 0) {
-			//alert("You Win!!!");
-			game.nextLevel();
-			life.bear();
-			passOne();
-		}
-	}
 
 	function getNode(point) {
 		for (var i = 0; i < myself.gameBoard.length; i++) {
@@ -1600,22 +1688,32 @@ function LiveGame(canvasDiv, fps, displayHeight, displayWidth) {
 		}
 		ctx.fill();
 	}
+
+	this.stop = function () {
+		if (updateID != null) {
+			clearInterval(updateID);
+			updateID = null;
+		}
+		if (renderID != null) {
+			clearInterval(renderID);
+			renderID = null;
+		}
+	};
 }
 
 function init() {
 	var gameCanvasDiv = document.getElementById("gameCanvas");
 	game = new Game(gameCanvasDiv, 700, 600, 1, 100, 4, 200, 2, 60);
 	//game.begin();
-	life = new Life(6, game);
 	var liveCanvasDiv = document.getElementById("liveGame");
 	live = new LiveGame(liveCanvasDiv, 60, 350, 300);
 	var scoreDiv;
 	scoreDiv = document.getElementById("score");
-	scoreDiv.innerHTML = "Score: " + game.score.toFixed(2) + " Cleared: 0%<br>Lives Left: " + life.mylife + "<br>Time Remaining " + parseInt(life.timeRemain / 60000.0)
-		+ " : " + parseInt((life.timeRemain % 60000) / 1000);
+	scoreDiv.innerHTML = "Score: " + game.score.toFixed(2) + " Cleared: 0%<br>Lives Left: " + game.life.mylife + "<br>Time Remaining " + parseInt(game.life.timeRemain / 60000.0)
+		+ " : " + parseInt((game.life.timeRemain % 60000) / 1000);
 	game.displayScore = function () {
-		scoreDiv.innerHTML = "Score: " + game.score.toFixed(2) + " Cleared: " + game.cover.toFixed(2) + "<br>Lives Left: " + life.mylife + "<br>Time Remaining " + parseInt(life.timeRemain / 60000.0)
-		+ " : " + parseInt((life.timeRemain % 60000) / 1000);
+		scoreDiv.innerHTML = "Score: " + game.score.toFixed(2) + " Cleared: " + game.cover.toFixed(2) + "<br>Lives Left: " + game.life.mylife + "<br>Time Remaining " + parseInt(game.life.timeRemain / 60000.0)
+		+ " : " + parseInt((game.life.timeRemain % 60000) / 1000);
 	};
 	$(function () {
 		$(".meter > span").each(function () {
