@@ -5,6 +5,9 @@ var __extends = this.__extends || function (d, b) {
 };
 var uid;
 var game;
+var live;
+var life;
+var init;
 var ParticleDemoMasterAddress = this["AppInfo"] && this["AppInfo"]["MasterAddress"] ? this["AppInfo"]["MasterAddress"] : "localhost:9090";
 var ParticleDemoAppId = this["AppInfo"] && this["AppInfo"]["AppId"] ? this["AppInfo"]["AppId"] : "<no-app-id>";
 var ParticleDemoAppVersion = this["AppInfo"] && this["AppInfo"]["AppVersion"] ? this["AppInfo"]["AppVersion"] : "1.0";
@@ -45,7 +48,21 @@ var DemoLoadBalancing = (function (_super) {
                 this.speak(sender + ": " + mess, this.myRoomActors()[actorNr].getCustomProperty("color"));
                 break;
             case 2:
-                console.log("asdasdads: " + content.senderName);
+                init();
+                var gameDiv = document.getElementById("gameDiv");
+                var liveGameDiv = document.getElementById("liveGame");
+                gameDiv.style.display = "block";
+                liveGameDiv.style.display = "block";
+                var readyStat = document.getElementById("readyStatus");
+                readyStat.style.display = "none";
+                game.client = this;
+                game.begin();
+                live.begin();
+                life.calTime();
+                this.sendGameState(this);
+                break;
+            case 3:
+                live.updateState(JSON.parse(content.gameState));
                 break;
             default:
                 console.log("Unknown Message: " + JSON.stringify(content));
@@ -214,6 +231,16 @@ var DemoLoadBalancing = (function (_super) {
         var title = document.getElementsByTagName("h1")[0];
         title.innerText = "Multiple login detected. You are disconnected.";
     };
+    DemoLoadBalancing.prototype.getUpdateFunction = function (client) {
+        return function () {
+            client.raiseEvent(3, {
+                gameState: JSON.stringify(game.getCurrState())
+            });
+        };
+    };
+    DemoLoadBalancing.prototype.sendGameState = function (client) {
+        this.getUpdateFunction(this)();
+    };
     DemoLoadBalancing.prototype.setupUI = function () {
         var _this = this;
         this.logger.info("Setting up UI.");
@@ -327,6 +354,7 @@ var DemoLoadBalancing = (function (_super) {
                 } else {
                     client.startGameHandle = null;
                     client.speak("Game start!");
+                    client.raiseEvent(2, null);
                 }
             }
         };
@@ -359,4 +387,3 @@ window.onload = function () {
     demo = new DemoLoadBalancing();
     demo.start();
 };
-//@ sourceMappingURL=app.js.map

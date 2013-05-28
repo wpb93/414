@@ -26,6 +26,24 @@ function between(m, a, b, inclusive, cmp) {
 	return false;
 }
 
+function copyArray(array) {
+	if (array instanceof Array) {
+		var newArray = [];
+		for (var i = 0; i < array.length; i++) {
+			newArray[i] = copyArray(array[i]);
+		}
+		return newArray;
+	} else if (array instanceof Object) {
+		try {
+			return array.clone();
+		} catch (e) {
+			return array;
+		}
+	} else {
+		return array;
+	}
+}
+
 function Point(x, y) {
 	this.x = x;
 	this.y = y;
@@ -35,14 +53,20 @@ function Point(x, y) {
 	}
 }
 
-function Ball(position_x, position_y, speed_x, speed_y, ballRadius) {
+function Ball(position_x, position_y, speed_x, speed_y, ballRadius, game) {
 	this.position = new Point(position_x, position_y);
 	this.speed = new Point(speed_x, speed_y);
 	this.radius = ballRadius;
+	this.game = game;
 	var myself = this;
+
+	this.clone = function () {
+		return new Ball(myself.position.x, myself.position.y, myself.speed.x, myself.speed.y, myself.radius);
+	}
+
 	this.move = function () {
-		myself.position.x += parseFloat(myself.speed.x) / game.updateRate;
-		myself.position.y += parseFloat(myself.speed.y) / game.updateRate;
+		myself.position.x += parseFloat(myself.speed.x) / myself.game.updateRate;
+		myself.position.y += parseFloat(myself.speed.y) / myself.game.updateRate;
 
 		var collision = [];
 		var bounce = [];
@@ -52,19 +76,19 @@ function Ball(position_x, position_y, speed_x, speed_y, ballRadius) {
 		border[Line.VERTICAL] = { '-1': -1, '1': -1 };
 		collision[Line.HORIZONTAL] = { '-1': 0, '1': 0 };
 		collision[Line.VERTICAL] = { '-1': 0, '1': 0 };
-		for (var i = 0; i < game.lines.length; i++) {
-			if (game.lines[i].collide(myself)) {
-				var bounceDir = myself.bounceDirection(game.lines[i]);
-				var ballDir = game.lines[i].direction == Line.HORIZONTAL ? 'y' : 'x';
-				collision[game.lines[i].direction][bounceDir] = bounceDir;
-				bounce[game.lines[i].direction] = true;
-				border[game.lines[i].direction][bounceDir] = (border[game.lines[i].direction][bounceDir] < 0
-						? game.lines[i].startPoint[ballDir]
-						: bounceDir * Math.max(bounceDir * game.lines[i].startPoint[ballDir], bounceDir * border[game.lines[i].direction][bounceDir]));
-				if (!game.lines[i].finished) {
-					if (game.currLines[0] == game.lines[i]) game.currLines.shift();
-					else game.currLines.pop();
-					game.lines.splice(i--, 1);
+		for (var i = 0; i < myself.game.lines.length; i++) {
+			if (myself.game.lines[i].collide(myself)) {
+				var bounceDir = myself.bounceDirection(myself.game.lines[i]);
+				var ballDir = myself.game.lines[i].direction == Line.HORIZONTAL ? 'y' : 'x';
+				collision[myself.game.lines[i].direction][bounceDir] = bounceDir;
+				bounce[myself.game.lines[i].direction] = true;
+				border[myself.game.lines[i].direction][bounceDir] = (border[myself.game.lines[i].direction][bounceDir] < 0
+						? myself.game.lines[i].startPoint[ballDir]
+						: bounceDir * Math.max(bounceDir * myself.game.lines[i].startPoint[ballDir], bounceDir * border[myself.game.lines[i].direction][bounceDir]));
+				if (!myself.game.lines[i].finished) {
+					if (myself.game.currLines[0] == myself.game.lines[i]) myself.game.currLines.shift();
+					else myself.game.currLines.pop();
+					myself.game.lines.splice(i--, 1);
 				}
 			}
 		}
@@ -72,13 +96,13 @@ function Ball(position_x, position_y, speed_x, speed_y, ballRadius) {
 		var speedDir = [];
 		speedDir[Line.VERTICAL] = collision[Line.HORIZONTAL][-1] + collision[Line.HORIZONTAL][1];
 		speedDir[Line.HORIZONTAL] = collision[Line.VERTICAL][-1] + collision[Line.VERTICAL][1];
-		var halfLineWidth = parseFloat(game.lineWidth) / 2;
+		var halfLineWidth = parseFloat(myself.game.lineWidth) / 2;
 		if (bounce[Line.HORIZONTAL]) {
 			if (speedDir[Line.VERTICAL]) {
 				myself.speed.y = speedDir[Line.VERTICAL] * Math.abs(myself.speed.y);
 				var b = border[Line.HORIZONTAL][speedDir[Line.VERTICAL]];
 				var diff = myself.position.y - b;
-				myself.position.y = b + /*(parseFloat(myself.speed.y) / game.updateRate - diff) + */speedDir[Line.VERTICAL] * (halfLineWidth + myself.radius);
+				myself.position.y = b + /*(parseFloat(myself.speed.y) / myself.game.updateRate - diff) + */speedDir[Line.VERTICAL] * (halfLineWidth + myself.radius);
 			} else {
 				myself.speed.y *= -1;
 			}
@@ -88,7 +112,7 @@ function Ball(position_x, position_y, speed_x, speed_y, ballRadius) {
 				myself.speed.x = speedDir[Line.HORIZONTAL] * Math.abs(myself.speed.x);
 				var b = border[Line.VERTICAL][speedDir[Line.HORIZONTAL]];
 				var diff = myself.position.x - b;
-				myself.position.x = b + /*(parseFloat(myself.speed.x) / game.updateRate - diff) + */speedDir[Line.HORIZONTAL] * (halfLineWidth + myself.radius);
+				myself.position.x = b + /*(parseFloat(myself.speed.x) / myself.game.updateRate - diff) + */speedDir[Line.HORIZONTAL] * (halfLineWidth + myself.radius);
 			} else {
 				myself.speed.x *= -1;
 			}
@@ -97,7 +121,7 @@ function Ball(position_x, position_y, speed_x, speed_y, ballRadius) {
 
 	this.bounceDirection = function (line) {
 		var lineDirPerp = line.direction == Line.HORIZONTAL ? 'y' : 'x';
-		var diff = line.startPoint[lineDirPerp] - (myself.position[lineDirPerp] - parseFloat(myself.speed[lineDirPerp] / game.updateRate));
+		var diff = line.startPoint[lineDirPerp] - (myself.position[lineDirPerp] - parseFloat(myself.speed[lineDirPerp] / myself.game.updateRate));
 		if (diff == 0) {
 			return myself.speed[lineDirPerp] > 0 ? -1 : 1;
 		} else {
@@ -110,41 +134,50 @@ function Ball(position_x, position_y, speed_x, speed_y, ballRadius) {
 var Line;
 Line.HORIZONTAL = 1;
 Line.VERTICAL = 2;
-function Line(start_x, start_y, end_x, end_y, drawSpeed) {
+function Line(start_x, start_y, end_x, end_y, drawSpeed, game) {
 	this.startPoint = new Point(start_x, start_y);
 	this.endPoint = new Point(end_x, end_y);
 	this.drawPoint = new Point(start_x, start_y);
 	this.direction = start_x == end_x ? Line.VERTICAL : Line.HORIZONTAL;
 	this.drawSpeed = drawSpeed;
 	this.finished = false;
+	this.game = game;
 	var myself = this;
+
+	this.clone = function () {
+		var newLine = new Line(myself.startPoint.x, myself.startPoint.y, myself.endPoint.x, myself.endPoint.y, myself.drawSpeed);
+		newLine.drawPoint = myself.drawPoint.clone();
+		newLine.finished = myself.finished;
+		return newLine;
+	}
+
 	this.draw = function () {
 		var drawDir = myself.direction == Line.HORIZONTAL ? 'x' : 'y';
 		if (myself.drawPoint[drawDir] == myself.endPoint[drawDir]) {
 			if (!myself.finished) {
-				if (game.currLines[0] == myself) game.currLines.shift();
-				else game.currLines.pop();
+				if (myself.game.currLines[0] == myself) myself.game.currLines.shift();
+				else myself.game.currLines.pop();
 				myself.finished = true;
-				game.addNode(myself);
+				myself.game.addNode(myself);
 			}
 			return;
 		}
-		myself.drawPoint[drawDir] += ((myself.endPoint[drawDir] - myself.startPoint[drawDir] > 0) ? 1 : -1) * parseFloat(myself.drawSpeed) / game.updateRate;
-		if (!between(myself.drawPoint[drawDir], myself.startPoint[drawDir], myself.endPoint[drawDir], true)) {
+		myself.drawPoint[drawDir] += ((myself.endPoint[drawDir] - myself.startPoint[drawDir] > 0) ? 1 : -1) * parseFloat(myself.drawSpeed) / myself.game.updateRate;
+		if (!between(myself.drawPoint[drawDir], myself.startPoint[drawDir], myself.endPoint[drawDir], [true, true])) {
 			myself.drawPoint[drawDir] = myself.endPoint[drawDir];
-			if (game.currLines[0] == myself) game.currLines.shift();
-			else game.currLines.pop();
+			if (myself.game.currLines[0] == myself) myself.game.currLines.shift();
+			else myself.game.currLines.pop();
 			myself.finished = true;
-			game.addNode(myself);
+			myself.game.addNode(myself);
 		}
 	};
 
 	this.collide = function (ball) {
-		var halfLineWidth = parseFloat(game.lineWidth) / 2;
+		var halfLineWidth = parseFloat(myself.game.lineWidth) / 2;
 		var lineDir = myself.direction == Line.HORIZONTAL ? 'x' : 'y';
 		var lineDirPerp = myself.direction == Line.HORIZONTAL ? 'y' : 'x';
-		return (between(ball.position[lineDirPerp], myself.startPoint[lineDirPerp] - (halfLineWidth + ball.radius), myself.startPoint[lineDirPerp] + (halfLineWidth + ball.radius), true)
-				&& between(ball.position[lineDir], myself.startPoint[lineDir], myself.drawPoint[lineDir], true));
+		return (between(ball.position[lineDirPerp], myself.startPoint[lineDirPerp] - (halfLineWidth + ball.radius), myself.startPoint[lineDirPerp] + (halfLineWidth + ball.radius), [true, true])
+				&& between(ball.position[lineDir], myself.startPoint[lineDir], myself.drawPoint[lineDir], [true, true]));
 	};
 }
 
@@ -158,10 +191,19 @@ function Node(leftPoint, rightPoint) {
 	this.rightPoint = rightPoint;
 	this.hasBalls = true;
 	this.neighbor = new Array(4);
+	var myself = this;
 	for (var i = 0; i < this.neighbor.length; i++) {
 		this.neighbor[i] = null;
 	}
 
+	this.clone = function () {
+		var dummyNode = new Node(myself.leftPoint.clone(), myself.rightPoint.clone());
+		dummyNode.hasBalls = myself.hasBalls;
+		for (var i = 0; i < dummyNode.neighbor.length; i++) {
+			dummyNode.neighbor[i] = !!myself.neighbor[i];
+		}
+		return dummyNode;
+	}
 }
 
 ////////////////////////
@@ -181,7 +223,7 @@ function Bar(initialEnergy, maxEnergy, energyPSecond, width, multipler) {
 	var begin = function () {
 		myself.outer.style.width = myself.widht + "px";
 		updateIntervalId = setInterval(function () {
-		    myself.energy += eps;
+			myself.energy += eps;
 			myself.updateBar();
 		}, 1000);
 
@@ -194,7 +236,7 @@ function Bar(initialEnergy, maxEnergy, energyPSecond, width, multipler) {
 
 	this.wakeUpUpdate = function () {
 		updateIntervalId = setInterval(function () {
-		    myself.energy += eps;
+			myself.energy += eps;
 			myself.updateBar();
 		}, 1000);
 	};
@@ -213,7 +255,7 @@ function Bar(initialEnergy, maxEnergy, energyPSecond, width, multipler) {
 	};
 
 	this.updateBar = function () {
-	    
+		
 		if (myself.energy >= myself.maxEnergy) {
 			myself.energy = myself.maxEnergy;
 		}
@@ -314,22 +356,45 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 	this.gravity = [];
 	this.cover = 0;
 	this.score = 0;
+	this.client = null;
 	var myself = this;
 	var bar;
 	var initialEnergy = 0;
 	var multiplier = 4.0;
 	var decrease = 0.0025;
-	var updateID;
-	var renderID;
-	var decreaseID;
+	var updateID = null;
+	var renderID = null;
+	var decreaseID = null;
+	var sendID = null;
 	for (var i = 0; i < this.canvas.length; i++) {
 		this.canvas[i].style.display = 'none';
 		this.canvas[i].setAttribute('width', width);
 		this.canvas[i].setAttribute('height', height);
 	}
+
+	this.getCurrState = function () {
+		var state = {
+			gameHeight: myself.gameHeight,
+			gameWidth: myself.gameWidth,
+			gameBoard: copyArray(myself.gameBoard),
+			gravity: copyArray(myself.gravity),
+			balls: copyArray(myself.balls),
+			ballNumber: myself.ballNumber,
+			ballSpeed: myself.ballSpeed,
+			ballRadius: myself.ballRadius,
+			lines: copyArray(myself.lines),
+			lineSpeed: myself.lineSpeed,
+			lineWidth: myself.lineWidth,
+			currLines: copyArray(myself.currLines),
+			cover: myself.cover,
+			score: myself.score
+		};
+		return state;
+	};
+
 	this.begin = function () {
 		//new bar
-	    bar = new Bar(initialEnergy, 1000, 1, 1000, 4);
+		bar = new Bar(initialEnergy, 1000, 1, 1000, 4);
 
 		//new balls
 		myself.gameBoard = [[new Node(new Point(1, 1), new Point(myself.gameWidth - 1, myself.gameHeight - 1))]];
@@ -341,25 +406,25 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 			var angle = quadrant * 0.5 * Math.PI + 0.05 * Math.PI + part;
 			var speed_x = myself.ballSpeed * Math.cos(angle);
 			var speed_y = myself.ballSpeed * Math.sin(angle);
-			myself.balls[i] = new Ball(x, y, speed_x, speed_y, myself.ballRadius);
+			myself.balls[i] = new Ball(x, y, speed_x, speed_y, myself.ballRadius, myself);
 		}
 
-		var line = new Line(1, 1, myself.gameWidth - 1, 1, Number.POSITIVE_INFINITY);
+		var line = new Line(1, 1, myself.gameWidth - 1, 1, Number.POSITIVE_INFINITY, myself);
 		line.drawPoint = line.endPoint;
 		line.finished = true;
 		myself.lines.push(line);
 
-		line = new Line(1, 1, 1, myself.gameHeight - 1, Number.POSITIVE_INFINITY);
+		line = new Line(1, 1, 1, myself.gameHeight - 1, Number.POSITIVE_INFINITY, myself);
 		line.drawPoint = line.endPoint;
 		line.finished = true;
 		myself.lines.push(line);
 
-		line = new Line(myself.gameWidth - 1, myself.gameHeight - 1, myself.gameWidth - 1, 1, Number.POSITIVE_INFINITY);
+		line = new Line(myself.gameWidth - 1, myself.gameHeight - 1, myself.gameWidth - 1, 1, Number.POSITIVE_INFINITY, myself);
 		line.drawPoint = line.endPoint;
 		line.finished = true;
 		myself.lines.push(line);
 
-		line = new Line(myself.gameWidth - 1, myself.gameHeight - 1, 1, myself.gameHeight - 1, Number.POSITIVE_INFINITY);
+		line = new Line(myself.gameWidth - 1, myself.gameHeight - 1, 1, myself.gameHeight - 1, Number.POSITIVE_INFINITY, myself);
 		line.drawPoint = line.endPoint;
 		line.finished = true;
 		myself.lines.push(line);
@@ -371,6 +436,9 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		updateID = setInterval(update, 1000.0 / myself.updateRate);
 		renderID = setInterval(render, 1000.0 / myself.fps);
 		decreaseID = setInterval(decreaseBonus, 30);
+		if (myself.client) {
+			sendID = setInterval(myself.client.sendGameState, 1000);
+		}
 
 		item1.use = false;
 		item2.use = false;
@@ -384,7 +452,7 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		var linePoint = line.startPoint;
 		var nodePos = getNode(linePoint);
 		//console.log((myself.gameBoard[nodePos.x][nodePos.y]));
-		var node = game.gameBoard[nodePos.x][nodePos.y];
+		var node = myself.gameBoard[nodePos.x][nodePos.y];
 		var nodePoint = node.leftPoint;
 
 		if (linePoint.y > nodePoint.y) {   //add row
@@ -526,7 +594,7 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 				}
 			}
 		}
-		myself.cover = (parseFloat(cover) / (game.gameHeight * game.gameWidth)) * 100;
+		myself.cover = (parseFloat(cover) / (myself.gameHeight * myself.gameWidth)) * 100;
 	}
 
 	function decreaseBonus() {
@@ -574,7 +642,7 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 				return;
 		}
 		
-		if (game.currLines.length) return;
+		if (myself.currLines.length) return;
 
 		var clickPos = new Point(e.offsetX, e.offsetY);
 		var nodePos = getNode(clickPos);
@@ -634,9 +702,9 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 			if (draw) {
 				endPoint[drawDir.lineDir] = node ? node.rightPoint[drawDir.lineDir] : 1;
 				if (clickPos[drawDir.lineDir] != endPoint[drawDir.lineDir]) {
-					newLine = new Line(clickPos.x, clickPos.y, endPoint.x, endPoint.y, myself.lineSpeed);
+					newLine = new Line(clickPos.x, clickPos.y, endPoint.x, endPoint.y, myself.lineSpeed, myself);
 					myself.lines.push(newLine);
-					game.currLines.push(newLine);
+					myself.currLines.push(newLine);
 				}
 			}
 		}
@@ -682,12 +750,14 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 				var dimension = new Point(myself.gameWidth - 1, myself.gameHeight - 1);
 				endPoint[drawDir.lineDir] = node ? node.leftPoint[drawDir.lineDir] : dimension[drawDir.lineDir];
 				if (clickPos[drawDir.lineDir] != endPoint[drawDir.lineDir]) {
-					newLine = new Line(clickPos.x, clickPos.y, endPoint.x, endPoint.y, myself.lineSpeed);
+					newLine = new Line(clickPos.x, clickPos.y, endPoint.x, endPoint.y, myself.lineSpeed, myself);
 					myself.lines.push(newLine);
-					game.currLines.push(newLine);
+					myself.currLines.push(newLine);
 				}
 			}
 		}
+
+		if (myself.client) myself.client.sendGameState();
 	}
 
 	function update() {
@@ -767,7 +837,7 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		ctx.fill();
 
 		// gravity
-		for (var i = 0; i < game.gravity.length; i++) {
+		for (var i = 0; i < myself.gravity.length; i++) {
 			var g = myself.gravity[i];
 			var grd = ctx.createRadialGradient(g.center.x, g.center.y, 0, g.center.x, g.center.y, g.radius);
 			grd.addColorStop(0, "black");
@@ -792,15 +862,14 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 		var win = document.createElement("img");
 		var body = document.getElementById("body");
 		win.src = "pass.png";
-		win.style.position = "absolute";
-		win.style.top = "0px";
+		win.height = 100;
+		win.width = 200;
 		body.appendChild(win);
-		passOne();
 		setTimeout(function () {
 			window.clearInterval(updateID);
 			window.clearInterval(renderID);
 			if (decreaseID != null) window.clearInterval(decreaseID);
-		}, 3000.0 / game.fps);
+		}, 1500.0 / myself.fps);
 
 		setTimeout(function () {
 			body.removeChild(win);
@@ -815,7 +884,7 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 			myself.currLines = [];
 			myself.gravity = [];
 			myself.cover = 0;
-			//myself.score = 0;
+			myself.score = 0;
 			multiplier = 4.0;
 			decrease = 0.0025;
 			initialEnergy = bar.energy;
@@ -823,24 +892,324 @@ function Game(canvasDiv, height, width, ballNumber, ballSpeed, ballRadius, lineS
 			renderID = null;
 			decreaseID = null;
 			bar.pauseUpdate();
-			game.begin();
+			myself.begin();
 			myself.displayScore();
-		}, 3000);
+		}, 5000);
 	}
 }
 
-function passOne() {
-    var passMedia = document.createElement("audio");
-    passMedia.style.display = "none";
-    passMedia.src = "smb_stage_clear.mp3";
-    passMedia.controls = true;
-    passMedia.autoplay = true;
-    passMedia.play();
-    document.body.appendChild(passMedia);
-    passMedia.addEventListener("ended", function () {
-        document.body.removeChild(passMedia);
-    }, false);
+function LiveGame(canvasDiv, fps, displayHeight, displayWidth) {
+	this.canvasDiv = canvasDiv;
+	this.canvas = canvasDiv.getElementsByClassName('game');
+	this.display = 0;
+	this.gameHeight = 0;
+	this.gameWidth = 0;
+	this.displayHeight = displayHeight;
+	this.displayWidth = displayWidth;
+	this.gameBoard = [[]];
+	this.balls = [];
+	this.ballNumber = 0;
+	this.ballSpeed = 0;
+	this.ballRadius = 0;
+	this.lines = [];
+	this.lineSpeed = 0;
+	this.lineWidth = 0;
+	this.fps = fps;
+	this.updateRate = 80;
+	this.currLines = [];
+	this.gravity = [];
+	this.cover = 0;
+	this.score = 0;
+	var myself = this;
+	var scaleX = parseFloat(this.displayWidth) / this.gameWidth;
+	var scaleY = parseFloat(this.displayHeight) / this.gameHeight;
+	var updateID;
+	var renderID;
+	for (var i = 0; i < this.canvas.length; i++) {
+		this.canvas[i].style.display = 'none';
+		this.canvas[i].setAttribute('width', width);
+		this.canvas[i].setAttribute('height', height);
+	}
+
+	this.updateState = function (state) {
+		myself.gameHeight = state.gameHeight;
+		myself.gameWidth = state.gameWidth;
+		myself.gameBoard = copyArray(state.gameBoard);
+		myself.gravity = copyArray(state.gravity);
+		myself.balls = copyArray(state.balls);
+		for (var i = 0; i < myself.balls.length; i++) {
+			myself.balls[i].game = myself;
+		}
+		myself.ballNumber = state.ballNumber;
+		myself.ballSpeed = state.ballSpeed;
+		myself.ballRadius = state.ballRadius;
+		myself.lines = copyArray(state.lines);
+		for (var i = 0; i < myself.lines.length; i++) {
+			myself.lines[i].game = myself;
+		}
+		myself.lineSpeed = state.lineSpeed;
+		myself.lineWidth = state.lineWidth;
+		myself.currLines = copyArray(state.currLines);
+		myself.cover = state.cover;
+		myself.score = state.score;
+		for (var i = 0; i < myself.gameBoard.length; i++) {
+			for (var j = 0; j < myself.gameBoard[i].length; j++) {
+				if (myself.gameBoard[i][j].neighbor[Node.UP]) myself.gameBoard[i][j].neighbor[Node.UP] = myself.gameBoard[i][j - 1];
+				if (myself.gameBoard[i][j].neighbor[Node.DOWN]) myself.gameBoard[i][j].neighbor[Node.UP] = myself.gameBoard[i][j + 1];
+				if (myself.gameBoard[i][j].neighbor[Node.LEFT]) myself.gameBoard[i][j].neighbor[Node.UP] = myself.gameBoard[i - 1][j];
+				if (myself.gameBoard[i][j].neighbor[Node.RIGHT]) myself.gameBoard[i][j].neighbor[Node.UP] = myself.gameBoard[i + 1][j];
+			}
+		}
+		var scaleX = parseFloat(this.displayWidth) / this.gameWidth;
+		var scaleY = parseFloat(this.displayHeight) / this.gameHeight;
+	}
+
+	this.begin = function (state) {
+		this.updateState(state);
+		updateID = setInterval(update, 1000.0 / myself.updateRate);
+		renderID = setInterval(render, 1000.0 / myself.fps);
+	};
+
+	this.addNode = function (line) {
+		var linePoint = line.startPoint;
+		var nodePos = getNode(linePoint);
+		//console.log((myself.gameBoard[nodePos.x][nodePos.y]));
+		var node = myself.gameBoard[nodePos.x][nodePos.y];
+		var nodePoint = node.leftPoint;
+
+		if (linePoint.y > nodePoint.y) {   //add row
+			var newNode;
+			for (var i = 0; i < myself.gameBoard.length; i++) {
+				var original = myself.gameBoard[i][nodePos.y];
+				newNode = new Node(original.leftPoint.clone(), new Point(original.rightPoint.x, linePoint.y));
+				original.leftPoint.y = linePoint.y;
+				myself.gameBoard[i].splice(nodePos.y, 0, newNode);
+			}
+			for (i = 0; i < myself.gameBoard.length; i++) {
+				var newNode = myself.gameBoard[i][nodePos.y];
+
+				var btm = myself.gameBoard[i][nodePos.y + 1];
+				if ((newNode.neighbor[Node.UP] = btm.neighbor[Node.UP])) {
+					myself.gameBoard[i][nodePos.y - 1].neighbor[Node.DOWN] = newNode;
+				}
+
+				newNode.neighbor[Node.DOWN] = btm;
+				btm.neighbor[Node.UP] = newNode;
+
+				newNode.neighbor[Node.LEFT] = btm.neighbor[Node.LEFT] ? myself.gameBoard[i - 1][nodePos.y] : null;
+
+				newNode.neighbor[Node.RIGHT] = btm.neighbor[Node.RIGHT] ? myself.gameBoard[i + 1][nodePos.y] : null;
+			}
+			nodePos.y++;
+		}
+
+		if (linePoint.x > nodePoint.x) {    //add column
+			var newCol = new Array(myself.gameBoard[nodePos.x].length);
+			for (var i = 0; i < newCol.length; i++) {
+				var original = myself.gameBoard[nodePos.x][i];
+				newCol[i] = new Node(original.leftPoint.clone(), new Point(linePoint.x, original.rightPoint.y));
+				original.leftPoint.x = linePoint.x;
+			}
+			myself.gameBoard.splice(nodePos.x, 0, newCol);
+			for (i = 0; i < newCol.length; i++) {
+				var right = myself.gameBoard[nodePos.x + 1][i];
+				if ((newCol[i].neighbor[Node.LEFT] = right.neighbor[Node.LEFT])) {
+					myself.gameBoard[nodePos.x - 1][i].neighbor[Node.RIGHT] = newCol[i];
+				}
+
+				newCol[i].neighbor[Node.RIGHT] = right;
+				right.neighbor[Node.LEFT] = newCol[i];
+
+				newCol[i].neighbor[Node.UP] = right.neighbor[Node.UP] ? myself.gameBoard[nodePos.x][i - 1] : null;
+
+				newCol[i].neighbor[Node.DOWN] = right.neighbor[Node.DOWN] ? myself.gameBoard[nodePos.x][i + 1] : null;
+			}
+			nodePos.x++;
+		}
+
+		var nodes = [];
+		if (line.direction == Line.HORIZONTAL) {
+			var dir = line.startPoint.x > line.endPoint.x ? -1 : 1;
+			var point = line.startPoint.x > line.endPoint.x ? 'leftPoint' : 'rightPoint';
+			var tmpNode = nodePos.clone();
+			if (dir < 0) {
+				tmpNode.x += dir;
+			}
+			for (; myself.gameBoard[tmpNode.x] && line.endPoint.x * dir >= myself.gameBoard[tmpNode.x][tmpNode.y][point].x * dir; tmpNode.x += dir) {
+				var top = myself.gameBoard[tmpNode.x][tmpNode.y - 1];
+				var btm = myself.gameBoard[tmpNode.x][tmpNode.y];
+				if (top) top.neighbor[Node.DOWN] = null;
+				btm.neighbor[Node.UP] = null;
+			}
+			console.log(nodes);
+		} else {
+			var dir = line.startPoint.y > line.endPoint.y ? -1 : 1;
+			var point = line.startPoint.y > line.endPoint.y ? 'leftPoint' : 'rightPoint';
+			var tmpNode = nodePos.clone();
+			if (dir < 0) {
+				tmpNode.y += dir;
+			}
+			for (; myself.gameBoard[tmpNode.x][tmpNode.y] && line.endPoint.y * dir >= myself.gameBoard[tmpNode.x][tmpNode.y][point].y * dir; tmpNode.y += dir) {
+				var left = tmpNode.x - 1 >= 0 ? myself.gameBoard[tmpNode.x - 1][tmpNode.y] : null;
+				var right = myself.gameBoard[tmpNode.x][tmpNode.y];
+				if (left) left.neighbor[Node.RIGHT] = null;
+				right.neighbor[Node.LEFT] = null;
+			}
+		}
+		console.log(myself.gameBoard.length + " " + myself.gameBoard[0].length);
+
+		for (var i = 0; i < myself.gameBoard.length; i++) {
+			for (var j = 0; j < myself.gameBoard[i].length; j++) {
+				myself.gameBoard[i][j].hasBalls = false;
+			}
+		}
+		for (i = 0; i < myself.balls.length; i++) {
+			markHasBalls(getNode(myself.balls[i].position));
+		}
+		var oldCover = myself.cover;
+		updateCover();
+		myself.score += (parseFloat(myself.cover - oldCover) * multiplier);
+		myself.displayScore();
+	};
+
+	function getNode(point) {
+		for (var i = 0; i < myself.gameBoard.length; i++) {
+			if (between(point.x, myself.gameBoard[i][0].leftPoint.x, myself.gameBoard[i][0].rightPoint.x, [true, false])) {
+				for (var j = 0; j < myself.gameBoard[i].length; j++) {
+					if (between(point.y, myself.gameBoard[i][j].leftPoint.y, myself.gameBoard[i][j].rightPoint.y, [true, false])) {
+						return new Point(i, j);
+					}
+				}
+			}
+		}
+	}
+
+	function dfsNodeTable(node) {
+		if (!node || node.hasBalls) return;
+		node.hasBalls = true;
+		for (var k = 0; k < node.neighbor.length; k++) {
+			dfsNodeTable(node.neighbor[k]);
+		}
+	}
+
+	function markHasBalls(nodePos) {
+		if (!nodePos) return;
+		dfsNodeTable(myself.gameBoard[nodePos.x][nodePos.y]);
+	}
+
+	function updateCover() {
+		var cover = 0;
+		for (var i = 0; i < myself.gameBoard.length; i++) {
+			for (var j = 0; j < myself.gameBoard[i].length; j++) {
+				if (myself.gameBoard[i][j].hasBalls == false) {
+					cover += (myself.gameBoard[i][j].rightPoint.x - myself.gameBoard[i][j].leftPoint.x) * (myself.gameBoard[i][j].rightPoint.y - myself.gameBoard[i][j].leftPoint.y);
+				}
+			}
+		}
+		myself.cover = (parseFloat(cover) / (myself.gameHeight * myself.gameWidth)) * 100;
+	}
+
+	this.displayScore = function () { };
+
+	function update() {
+		for (var i = 0; i < myself.gravity.length; i++) {
+			myself.gravity[i].attract();
+		}
+		for (var i = 0; i < myself.balls.length; i++) {
+			myself.balls[i].move();
+		}
+		for (var i = 0; i < myself.lines.length; i++) {
+			myself.lines[i].draw();
+		}
+	}
+
+	function render() {
+		myself.canvas[(myself.display - 1 + myself.canvas.length) % myself.canvas.length].style.display = 'none';
+		myself.canvas[myself.display].style.display = 'block';
+		myself.display = (myself.display + 1) % myself.canvas.length;
+		var c = myself.canvas[myself.display];
+		var ctx = c.getContext("2d");
+		ctx.clearRect(0, 0, myself.gameWidth, myself.gameHeight);
+		ctx.lineWidth = myself.lineWidth;
+
+		// lines
+		ctx.strokeStyle = "black";
+		ctx.beginPath();
+		for (i = 0; i < myself.lines.length; i++) {
+			var line = myself.lines[i];
+			if (line.finished) {
+				ctx.moveTo(line.startPoint.x, line.startPoint.y);
+				ctx.lineTo(line.drawPoint.x, line.drawPoint.y);
+			}
+		}
+		ctx.stroke();
+
+		// lines
+		ctx.strokeStyle = "blue";
+		ctx.beginPath();
+		for (i = 0; i < myself.lines.length; i++) {
+			var line = myself.lines[i];
+			if (!line.finished) {
+				ctx.moveTo(line.startPoint.x, line.startPoint.y);
+				ctx.lineTo(line.drawPoint.x, line.drawPoint.y);
+			}
+		}
+		ctx.stroke();
+
+		// shades
+		ctx.fillStyle = "#BEBEBE";
+		ctx.beginPath();
+		for (var i = 0; i < myself.gameBoard.length; i++) {
+			for (var j = 0; j < myself.gameBoard[i].length; j++) {
+				var node = myself.gameBoard[i][j];
+				if (!node.hasBalls) {
+					var x = node.leftPoint.x;
+					var y = node.leftPoint.y;
+					var width = node.rightPoint.x - x;
+					var height = node.rightPoint.y - y;
+					if (j == 0 || (!node.neighbor[Node.UP] && myself.gameBoard[i][j - 1].hasBalls)) {
+						y++;
+						height--;
+					}
+					if (j == myself.gameBoard[i].length - 1 || (!node.neighbor[Node.DOWN] && myself.gameBoard[i][j + 1].hasBalls)) {
+						height--;
+					}
+					if (i == 0 || (!node.neighbor[Node.LEFT] && myself.gameBoard[i - 1][j].hasBalls)) {
+						x++;
+						width--;
+					}
+					if (i == myself.gameBoard.length - 1 || (!node.neighbor[Node.RIGHT] && myself.gameBoard[i + 1][j].hasBalls)) {
+						width--;
+					}
+					ctx.rect(x, y, width, height);
+				}
+			}
+		}
+		ctx.fill();
+
+		// gravity
+		for (var i = 0; i < myself.gravity.length; i++) {
+			var g = myself.gravity[i];
+			var grd = ctx.createRadialGradient(g.center.x, g.center.y, 0, g.center.x, g.center.y, g.radius);
+			grd.addColorStop(0, "black");
+			grd.addColorStop(1, "rgba(0, 0, 0, 0)");
+			ctx.fillStyle = grd;
+			ctx.beginPath();
+			ctx.arc(g.center.x, g.center.y, g.radius, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		// balls
+		ctx.fillStyle = "red";
+		ctx.beginPath();
+		for (var i = 0; i < myself.balls.length; i++) {
+			ctx.arc(myself.balls[i].position.x, myself.balls[i].position.y, myself.balls[i].radius, 0, Math.PI * 2);
+			ctx.closePath();
+		}
+		ctx.fill();
+	}
 }
+
 function init() {
 	var gameCanvasDiv = document.getElementById("gameCanvas");
 	game = new Game(gameCanvasDiv, 700, 600, 1, 100, 4, 200, 2, 60);

@@ -1,69 +1,70 @@
 ﻿<!DOCTYPE html>
-<html lang="zh">
-    <head>
-    <link rel="stylesheet" media="all" href="~/Content/eg.photon.demo.css" />
-    <link href='http://fonts.googleapis.com/css?family=Noto+Sans' rel='stylesheet' type='text/css' />
-    <script type="text/javascript">
-        var uid = "@User.Identity.Name";
-    </script>
-    <script type="text/javascript" src="~/Scripts/Photon/3rdparty/swfobject.js"></script>
-    <script type="text/javascript" src="~/Scripts/Photon/3rdparty/web_socket.js"></script>
-    <!--dev--><script type="text/javascript" src="~/Scripts/Photon/photon.js"></script>
-    <!--dev--><script type="text/javascript" src="~/Scripts/Photon/photon-lite-constants.js"></script>
-    <!--dev--><script type="text/javascript" src="~/Scripts/Photon/photon-loadbalancing-constants.js"></script>
-    <!--dev--><script type="text/javascript" src="~/Scripts/Photon/photon-loadbalancing.js"></script>
-    <!--lib--><!--script type="text/javascript" src="Photon/Photon-Javascript_SDK.js"></script-->
-    <!--info (optional)--><script type="text/javascript" src="~/Scripts/cloud-app-info.js"></script>
-    <script type="text/javascript" src="~/Scripts/app.js"></script>
-    <script type="text/javascript">
-        WEB_SOCKET_SWF_LOCATION = "Photon/3rdparty/WebSocketMain.swf";
-        // Set this to dump debug message from Flash to console.log:
-        WEB_SOCKET_DEBUG = false;
-    </script>
+<html>
+	<head>
+	<link rel="stylesheet" type="text/css" media="all" href="~/Content/eg.photon.demo.css" />
+	<link rel="stylesheet" type="text/css" href="~/Content/progressbar.css">
+	<link href='http://fonts.googleapis.com/css?family=Noto+Sans' rel='stylesheet' type='text/css' />
+	@Scripts.Render("~/bundles/jquery")
+	@RenderSection("scripts", required: false)
+	<script type="text/javascript">
+	    var uid = "@User.Identity.Name";
+	</script>
+	<script type="text/javascript" src="~/Scripts/game.js"></script>
+	<script type="text/javascript" src="~/Scripts/Photon/3rdparty/swfobject.js"></script>
+	<script type="text/javascript" src="~/Scripts/Photon/3rdparty/web_socket.js"></script>
+	<!--dev--><script type="text/javascript" src="~/Scripts/Photon/photon.js"></script>
+	<!--dev--><script type="text/javascript" src="~/Scripts/Photon/photon-lite-constants.js"></script>
+	<!--dev--><script type="text/javascript" src="~/Scripts/Photon/photon-loadbalancing-constants.js"></script>
+	<!--dev--><script type="text/javascript" src="~/Scripts/Photon/photon-loadbalancing.js"></script>
+	<!--lib--><!--script type="text/javascript" src="Photon/Photon-Javascript_SDK.js"></script-->
+	<!--info (optional)--><script type="text/javascript" src="~/Scripts/cloud-app-info.js"></script>
+	<script type="text/javascript" src="~/Scripts/app.js"></script>
+	<script type="text/javascript">
+		WEB_SOCKET_SWF_LOCATION = "Photon/3rdparty/WebSocketMain.swf";
+		// Set this to dump debug message from Flash to console.log:
+		WEB_SOCKET_DEBUG = false;
+	</script>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-        <meta charset="utf-8" />
-        <title>@ViewBag.Title</title>
-        <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
-        <meta name="viewport" content="width=device-width" />
-        @Styles.Render("~/Content/css")
-        @Scripts.Render("~/bundles/modernizr")
-    </head>
-    <body>
-        <header>
-            <div class="content-wrapper">
-                <div class="float-left">
-                   @Html.Partial("_LogoPartial")
-                </div>
-                <div class="float-right">
-                    <section id="login">
-                        @Html.Partial("_LoginPartial")
-                    </section>
-                    <nav>
-                        <ul id="menu">
-                            <li>@Html.ActionLink("Lobby", "Lobby", "Game")</li>
-                            <li>@Html.ActionLink("Single Player", "SinglePlayer", "Game")</li>
-                        </ul>
-                    </nav>
-                </div>
-            </div>
-        </header>
-        <div id="body">
-            @RenderSection("featured", required: false)
-            <section class="content-wrapper main-content clear-fix">
-                @RenderBody()
-            </section>
-        </div>
-        <footer>
-            <div class="content-wrapper">
-                <div class="float-left">
-                    <p>
-                        &copy; @DateTime.Now.Year - Divide and Conquer
-                    </p>
-                </div>
-            </div>
-        </footer>
-
-        @Scripts.Render("~/bundles/jquery")
-        @RenderSection("scripts", required: false)
-    </body>
+		<meta charset="utf-8" />
+		<title>@ViewBag.Title</title>
+		<link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+		<meta name="viewport" content="width=device-width" />
+		@Styles.Render("~/Content/css")
+		@Scripts.Render("~/bundles/modernizr")
+	</head>
+	<body>
+		<header>
+			<div class="content-wrapper">
+				<div class="float-left">
+				   @Html.Partial("_LogoPartial")
+				</div>
+				<div class="float-right">
+					<section id="login">
+						@Html.Partial("_LoginPartial")
+					</section>
+					<nav>
+						<ul id="menu">
+							<li>@Html.ActionLink("Lobby", "Lobby", "Game")</li>
+							<li>@Html.ActionLink("Single Player", "SinglePlayer", "Game")</li>
+						</ul>
+					</nav>
+				</div>
+			</div>
+		</header>
+		<div id="body">
+			@RenderSection("featured", required: false)
+			<section class="content-wrapper main-content clear-fix">
+				@RenderBody()
+			</section>
+		</div>
+		<footer>
+			<div class="content-wrapper">
+				<div class="float-left">
+					<p>
+						&copy; @DateTime.Now.Year - Divide and Conquer
+					</p>
+				</div>
+			</div>
+		</footer>
+	</body>
 </html>
