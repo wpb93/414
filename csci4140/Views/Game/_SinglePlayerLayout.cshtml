@@ -1,18 +1,16 @@
 ﻿<!DOCTYPE html>
 <html lang="zh">
     <head>
-    <link rel="stylesheet" media="all" href="~/Content/game.css" />
-    <link href='http://fonts.googleapis.com/css?family=Noto+Sans' rel='stylesheet' type='text/css' />
-    <script type="text/javascript" src="~/Scripts/game.js"></script>
-    <script type="text/javascript">
-        function init() {
-            var gameCanvasDiv = document.getElementById("gameCanvas");
-            game = new Game(gameCanvasDiv, 500, 900, 10, 400, 4, 200, 2, 60);
-            game.begin();
-        }
-
-        window.addEventListener("load", init, false);
-    </script>
+        <link rel="stylesheet" media="all" href="~/Content/game.css" />
+        <link rel="stylesheet" media="all" href="~/Content/progressbar.css" />
+        <link href='http://fonts.googleapis.com/css?family=Noto+Sans' rel='stylesheet' type='text/css' />
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.0/jquery.min.js"></script>
+        <script type="text/javascript" src="~/Scripts/singlePlayer.js"></script>
+        <script type="text/javascript">
+            window.addEventListener("load", init, false);
+            window.addEventListener("invoke",invokeItem,false);
+        </script>
+ 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
         <meta charset="utf-8" />
         <title>@ViewBag.Title</title>
